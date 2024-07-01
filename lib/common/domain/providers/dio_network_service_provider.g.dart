@@ -10,7 +10,7 @@ String _$networkServiceHash() => r'288ba146f6809ab099a76e84f8a134df98fa993d';
 
 /// See also [networkService].
 @ProviderFor(networkService)
-final networkServiceProvider = AutoDisposeProvider<DioNetworkService>.internal(
+final networkServiceProvider = Provider<DioNetworkService>.internal(
   networkService,
   name: r'networkServiceProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
