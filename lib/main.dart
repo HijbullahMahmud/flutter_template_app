@@ -1,20 +1,18 @@
 import 'package:clean_arch_with_riverpod/common/theme/app_theme.dart';
+import 'package:clean_arch_with_riverpod/routes/app_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'routes/app_route.dart';
 
 Future main() async {
   await dotenv.load(fileName: ".env");
-  runApp(ProviderScope(child: MyApp()));
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends ConsumerWidget {
-  MyApp({super.key});
-
-  final appRouter = AppRouter();
+  const MyApp({super.key});
 
   // This widget is the root of your application.
   @override
@@ -27,28 +25,17 @@ class MyApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
-      localizationsDelegates: [
+      localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: [
+      supportedLocales: const [
         Locale("en"),
         Locale("bn"),
       ],
       // locale: Locale("bn"),
-      routerConfig: appRouter.config(
-          // deepLinkTransformer: (uri) {
-          //   // if (uri.path.startsWith('/prefix')) {
-          //   //   return SynchronousFuture(
-          //   //     uri.replace(path: uri.path.replaceFirst('/prefix', '')),
-          //   //   );
-          //   // }
-          //   return SynchronousFuture(uri);
-          // },
-          ),
-      routeInformationParser: appRouter.defaultRouteParser(),
-      routerDelegate: appRouter.delegate(),
+      routerConfig: router,
     );
   }
 }
