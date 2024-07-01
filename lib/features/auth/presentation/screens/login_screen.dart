@@ -72,27 +72,16 @@ class _AuthScreenState extends ConsumerState<LoginScreen> {
                 loading: (_) => const Center(
                   child: CircularProgressIndicator(),
                 ),
-                orElse: () => loginButton(ref),
+                orElse: () => LoginButton(
+                  formKey: _formKey,
+                  userName: userNameController.text,
+                  password: passwordController.text,
+                ),
               )
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget loginButton(WidgetRef ref) {
-    return ElevatedButton(
-      onPressed: () {
-        // validate email and password
-        if (_formKey.currentState!.validate()) {
-          ref.read(authStateNotifierProvider.notifier).loginUser(
-                userNameController.text,
-                passwordController.text,
-              );
-        }
-      },
-      child: const Text('Login'),
     );
   }
 }
