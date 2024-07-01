@@ -1,8 +1,9 @@
 import 'package:clean_arch_with_riverpod/common/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'routes/app_route.dart';
 
 Future main() async {
@@ -26,16 +27,26 @@ class MyApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: [
+        Locale("en"),
+        Locale("bn"),
+      ],
+      // locale: Locale("bn"),
       routerConfig: appRouter.config(
-        // deepLinkTransformer: (uri) {
-        //   // if (uri.path.startsWith('/prefix')) {
-        //   //   return SynchronousFuture(
-        //   //     uri.replace(path: uri.path.replaceFirst('/prefix', '')),
-        //   //   );
-        //   // }
-        //   return SynchronousFuture(uri);
-        // },
-      ),
+          // deepLinkTransformer: (uri) {
+          //   // if (uri.path.startsWith('/prefix')) {
+          //   //   return SynchronousFuture(
+          //   //     uri.replace(path: uri.path.replaceFirst('/prefix', '')),
+          //   //   );
+          //   // }
+          //   return SynchronousFuture(uri);
+          // },
+          ),
       routeInformationParser: appRouter.defaultRouteParser(),
       routerDelegate: appRouter.delegate(),
     );
@@ -90,7 +101,7 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: Text(AppLocalizations.of(context)!.hello_world),
       ),
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
