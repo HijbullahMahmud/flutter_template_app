@@ -8,8 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final authStateNotifierProvider =
     StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+      
   final AuthRepository authRepository = ref.read(authRepositoryProvider);
   final UserRepository userRepository = ref.read(userLocalRepositoryProvider);
+
   return AuthNotifier(
       authRepository: authRepository, userRepository: userRepository);
 });
