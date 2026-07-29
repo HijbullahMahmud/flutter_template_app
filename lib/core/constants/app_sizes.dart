@@ -12,5 +12,7 @@ abstract final class AppSizes {
   static const double radius16 = 16;
 
   static const double contentMaxWidth = 1100;
-  static const double compactBreakpoint = 700;
+  static const double readableTextMaxWidth = 720;
+  static const double formMaxWidth = 680;
+  static const double cardMinWidth = 280;
 }

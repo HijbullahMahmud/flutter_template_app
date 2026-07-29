@@ -1,6 +1,7 @@
 import 'package:ag_pos/app/router/app_routes.dart';
 import 'package:ag_pos/core/constants/app_sizes.dart';
 import 'package:ag_pos/core/extensions/build_context_extensions.dart';
+import 'package:ag_pos/core/responsive/responsive_builder.dart';
 import 'package:ag_pos/core/widgets/app_error_view.dart';
 import 'package:ag_pos/core/widgets/app_page.dart';
 import 'package:ag_pos/features/home/domain/entities/template_feature.dart';
@@ -48,48 +49,54 @@ class _HomeContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSizes.space24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            context.locale.homeReadyTitle,
-            style: Theme.of(context).textTheme.headlineLarge,
+    return ResponsiveBuilder(
+      builder: (BuildContext context, metrics) {
+        return SingleChildScrollView(
+          padding: EdgeInsets.symmetric(
+            horizontal: metrics.horizontalPadding,
+            vertical: metrics.verticalPadding,
           ),
-          const SizedBox(height: AppSizes.space8),
-          Text(
-            context.locale.homeReadyDescription,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: AppSizes.space32),
-          LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-              final columns = constraints.maxWidth < AppSizes.compactBreakpoint
-                  ? 1
-                  : 2;
-              final itemWidth =
-                  (constraints.maxWidth - (AppSizes.space16 * (columns - 1))) /
-                  columns;
-
-              return Wrap(
-                spacing: AppSizes.space16,
-                runSpacing: AppSizes.space16,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: AppSizes.readableTextMaxWidth,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      context.locale.homeReadyTitle,
+                      style: metrics.isSmallPhone
+                          ? Theme.of(context).textTheme.headlineMedium
+                          : Theme.of(context).textTheme.headlineLarge,
+                    ),
+                    const SizedBox(height: AppSizes.space8),
+                    Text(
+                      context.locale.homeReadyDescription,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: metrics.sectionGap),
+              ResponsiveGrid(
+                minimumItemWidth: AppSizes.cardMinWidth,
+                spacing: metrics.gridGap,
                 children: features
                     .map(
-                      (TemplateFeature feature) => SizedBox(
-                        width: itemWidth,
-                        child: FeatureCard(feature: feature),
-                      ),
+                      (TemplateFeature feature) =>
+                          FeatureCard(feature: feature),
                     )
                     .toList(growable: false),
-              );
-            },
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

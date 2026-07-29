@@ -21,6 +21,8 @@ persisted Material 3 themes.
 - Persisted language selection with English as the default
 - Persisted light, dark, and system theme selection
 - Material 3 colors, typography, spacing, radii, and component themes
+- Responsive small-phone, phone, tablet, and expanded layouts
+- Adaptive spacing, typography, content widths, grids, and narrow controls
 - Shared page and error widgets
 - Strict analyzer rules plus unit and widget tests
 
@@ -58,6 +60,7 @@ persisted Material 3 themes.
 │   │   ├── extensions/           # Shared extensions
 │   │   ├── localization/         # Supported locales, persistence, notifier
 │   │   ├── network/              # Dio, CRUD, cache, auth, error mapping
+│   │   ├── responsive/           # Breakpoints, metrics, values, layout widgets
 │   │   ├── theme/                # ThemeData, tokens, persistence, notifier
 │   │   └── widgets/              # App-wide widgets
 │   ├── l10n/                     # ARB resources and generated localizations
@@ -92,6 +95,76 @@ presentation → domain ← data
 - `core` contains infrastructure shared by multiple features.
 
 Keep feature-specific code out of `core`.
+
+## Responsive layout
+
+Responsive decisions use available logical width instead of platform or device
+names:
+
+| Window class | Width | Typical use |
+| --- | ---: | --- |
+| Small phone | `< 360` | Compact spacing and stacked controls |
+| Phone | `360–599` | Standard mobile layout |
+| Tablet | `600–839` | Wider content and multiple columns |
+| Expanded | `≥ 840` | Tablet landscape and larger windows |
+
+Shared implementation lives in `lib/core/responsive/`:
+
+- `AppBreakpoints` maps a logical width to an `AppWindowSize`.
+- `ResponsiveValue<T>` keeps breakpoint-specific values declarative.
+- `AppResponsiveMetrics` provides page padding, card padding, and layout gaps.
+- `ResponsiveBuilder` exposes those metrics from current constraints.
+- `ResponsiveGrid` calculates columns from a minimum card width.
+- `ResponsiveConstrainedBox` keeps content centered and readable.
+
+Example:
+
+```dart
+ResponsiveBuilder(
+  builder: (context, metrics) {
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: metrics.horizontalPadding,
+        vertical: metrics.verticalPadding,
+      ),
+      child: ResponsiveGrid(
+        minimumItemWidth: AppSizes.cardMinWidth,
+        spacing: metrics.gridGap,
+        children: cards,
+      ),
+    );
+  },
+)
+```
+
+`AppPage` constrains general content to `1100` logical pixels. Settings and
+other forms should use `AppSizes.formMaxWidth`; long text should use
+`AppSizes.readableTextMaxWidth`. Cards remain content-driven instead of using
+fixed heights. Tablet typography increases modestly, while Flutter's
+`MediaQuery` text scaling remains active for accessibility.
+
+When implementing a Figma screen:
+
+1. Map Figma color and text styles to theme tokens rather than copying raw
+   values into a page.
+2. Treat 320, 390, 768, and 1024-pixel frames as reference states, not separate
+   screens.
+3. Translate Auto Layout behavior into `Row`, `Column`, `Flexible`, `Wrap`, and
+   `ResponsiveGrid`.
+4. Prefer start/end alignment so Arabic mirrors automatically.
+5. Test content-driven height with long Bangla and Arabic copy.
+6. Replace wide controls with a stacked or dropdown variant when their labels
+   cannot fit; the Settings theme selector demonstrates this pattern.
+
+Do not globally scale a Figma frame or use `FittedBox` for body text. Select
+layout, spacing, and component variants from constraints and let text wrap.
+
+Responsive widget coverage includes a 320×568 small phone at 2× text scale,
+Bangla compact settings, and a 1024×768 Arabic RTL tablet layout:
+
+```sh
+flutter test test/core/responsive test/widget_test.dart
+```
 
 ## Getting started
 

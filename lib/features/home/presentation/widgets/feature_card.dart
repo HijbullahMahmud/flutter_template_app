@@ -1,5 +1,6 @@
 import 'package:ag_pos/core/constants/app_sizes.dart';
 import 'package:ag_pos/core/extensions/build_context_extensions.dart';
+import 'package:ag_pos/core/responsive/responsive_builder.dart';
 import 'package:ag_pos/features/home/domain/entities/template_feature.dart';
 import 'package:flutter/material.dart';
 
@@ -13,37 +14,41 @@ class FeatureCard extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final (title, description) = _localizedContent(context, feature.icon);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSizes.space24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: colors.primaryContainer,
-                borderRadius: BorderRadius.circular(AppSizes.radius12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(AppSizes.space12),
-                child: Icon(
-                  _iconFor(feature.icon),
-                  color: colors.onPrimaryContainer,
+    return ResponsiveBuilder(
+      builder: (BuildContext context, metrics) {
+        return Card(
+          child: Padding(
+            padding: EdgeInsets.all(metrics.cardPadding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: colors.primaryContainer,
+                    borderRadius: BorderRadius.circular(AppSizes.radius12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSizes.space12),
+                    child: Icon(
+                      _iconFor(feature.icon),
+                      color: colors.onPrimaryContainer,
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(height: AppSizes.space16),
+                Text(title, style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: AppSizes.space8),
+                Text(
+                  description,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: AppSizes.space16),
-            Text(title, style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: AppSizes.space8),
-            Text(
-              description,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

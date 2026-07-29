@@ -1,4 +1,5 @@
 import 'package:ag_pos/core/constants/app_sizes.dart';
+import 'package:ag_pos/core/responsive/responsive_builder.dart';
 import 'package:flutter/material.dart';
 
 class AppPage extends StatelessWidget {
@@ -7,6 +8,7 @@ class AppPage extends StatelessWidget {
     this.title,
     this.actions,
     this.floatingActionButton,
+    this.maxContentWidth = AppSizes.contentMaxWidth,
     super.key,
   });
 
@@ -14,6 +16,7 @@ class AppPage extends StatelessWidget {
   final Widget body;
   final List<Widget>? actions;
   final Widget? floatingActionButton;
+  final double maxContentWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -22,15 +25,7 @@ class AppPage extends StatelessWidget {
           ? null
           : AppBar(title: Text(title!), actions: actions),
       body: SafeArea(
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: AppSizes.contentMaxWidth,
-            ),
-            child: body,
-          ),
-        ),
+        child: ResponsiveConstrainedBox(maxWidth: maxContentWidth, child: body),
       ),
       floatingActionButton: floatingActionButton,
     );

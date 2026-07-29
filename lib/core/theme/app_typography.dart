@@ -1,3 +1,4 @@
+import 'package:ag_pos/core/responsive/app_breakpoints.dart';
 import 'package:flutter/material.dart';
 
 abstract final class AppTypography {
@@ -22,4 +23,16 @@ abstract final class AppTypography {
     labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
     labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
   );
+
+  /// Tablets get a modest type increase. Flutter's MediaQuery text scaler is
+  /// still applied afterwards, so accessibility font-size settings are kept.
+  static TextTheme forWindowSize(AppWindowSize windowSize) {
+    final factor = switch (windowSize) {
+      AppWindowSize.smallPhone || AppWindowSize.phone => 1.0,
+      AppWindowSize.tablet => 1.0625,
+      AppWindowSize.expanded => 1.125,
+    };
+
+    return textTheme.apply(fontSizeFactor: factor);
+  }
 }
