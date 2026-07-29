@@ -110,6 +110,15 @@ names. Do not maintain separate screens for individual devices.
 | Tablet | `600–839` | Wider content and multiple columns |
 | Expanded | `≥ 840` | Tablet landscape and larger windows |
 
+### Responsive preview
+
+The same Home content changes from a single-column phone layout to a
+three-column tablet layout without maintaining separate screens:
+
+| Phone | Tablet |
+| --- | --- |
+| <img src="screenshots/small_phone.png" alt="Starter Home screen on a phone with one card per row" width="280"> | <img src="screenshots/tablet.png" alt="Starter Home screen on a tablet with three cards per row" width="420"> |
+
 Shared implementation lives in `lib/core/responsive/`:
 
 - `AppBreakpoints` maps a logical width to an `AppWindowSize`.
@@ -1004,6 +1013,15 @@ The Home page links to `/products`, a complete reference feature backed by the
 free [DummyJSON Products API](https://dummyjson.com/docs/products). It requires
 no account or authentication and supports pagination through `limit` and
 `skip`.
+
+### Products responsive preview
+
+The Products feature uses two columns on a regular phone and three columns on a
+tablet while sharing the same page, controller, and pagination implementation:
+
+| Phone — 2 columns | Tablet — 3 columns |
+| --- | --- |
+| <img src="screenshots/products_phone.png" alt="Paginated Products screen showing two columns on a phone" width="280"> | <img src="screenshots/products_tablet.png" alt="Paginated Products screen showing three columns on a tablet" width="420"> |
 
 The example demonstrates:
 
