@@ -1,30 +1,38 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
+import 'package:ag_pos/app/router/app_routes.dart';
+import 'package:ag_pos/app/template_app.dart';
+import 'package:ag_pos/core/di/app_providers.dart';
+import 'package:ag_pos/core/theme/theme_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:ag_pos/main.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('renders the starter home page', (WidgetTester tester) async {
+    await tester.pumpWidget(const AppProviders(child: TemplateApp()));
+    await tester.pumpAndSettle();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(find.text('Ready for your features.'), findsOneWidget);
+    expect(find.text('Clean architecture'), findsOneWidget);
+    expect(find.text('GoRouter'), findsOneWidget);
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  testWidgets('navigates to settings and changes theme', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const AppProviders(child: TemplateApp()));
+    await tester.pumpAndSettle();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    final appContext = tester.element(find.byType(MaterialApp));
+    expect(appContext.read<ThemeController>().themeMode, ThemeMode.system);
+
+    appContext.read<GoRouter>().goNamed(AppRouteNames.settings);
+    await tester.pumpAndSettle();
+    expect(find.text('Appearance'), findsOneWidget);
+
+    await tester.tap(find.text('Dark'));
+    await tester.pumpAndSettle();
+
+    expect(appContext.read<ThemeController>().themeMode, ThemeMode.dark);
   });
 }
