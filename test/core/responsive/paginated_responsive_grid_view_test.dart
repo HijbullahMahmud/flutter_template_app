@@ -75,6 +75,44 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('equalizes item heights within each responsive row', (
+    WidgetTester tester,
+  ) async {
+    _configureView(tester, const Size(1024, 768));
+    const heights = <double>[80, 140, 100, 60];
+
+    await tester.pumpWidget(
+      _testApp(
+        PaginatedResponsiveGridView(
+          itemCount: heights.length,
+          hasMore: false,
+          isLoadingMore: false,
+          onLoadMore: _noOp,
+          padding: const EdgeInsets.all(16),
+          itemBuilder: (BuildContext context, int index) {
+            return SizedBox(
+              key: ValueKey<String>('item-$index'),
+              height: heights[index],
+              child: Text('Item $index'),
+            );
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final firstHeight = tester.getSize(find.byKey(const ValueKey('item-0')));
+    final secondHeight = tester.getSize(find.byKey(const ValueKey('item-1')));
+    final thirdHeight = tester.getSize(find.byKey(const ValueKey('item-2')));
+    final nextRowHeight = tester.getSize(find.byKey(const ValueKey('item-3')));
+
+    expect(firstHeight.height, 140);
+    expect(secondHeight.height, firstHeight.height);
+    expect(thirdHeight.height, firstHeight.height);
+    expect(nextRowHeight.height, 60);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('loads another page when content does not fill the viewport', (
     WidgetTester tester,
   ) async {

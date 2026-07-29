@@ -130,19 +130,20 @@ class ResponsiveSliverGrid extends StatelessWidget {
           ) {
             final firstItemIndex = rowIndex * columns;
             final rowChildren = <Widget>[];
+            final columnWidths = <int, TableColumnWidth>{};
 
             for (var column = 0; column < columns; column++) {
               if (column > 0) {
-                rowChildren.add(SizedBox(width: spacing));
+                columnWidths[rowChildren.length] = FixedColumnWidth(spacing);
+                rowChildren.add(const SizedBox.shrink());
               }
 
               final itemIndex = firstItemIndex + column;
+              columnWidths[rowChildren.length] = const FlexColumnWidth();
               rowChildren.add(
-                Expanded(
-                  child: itemIndex < itemCount
-                      ? itemBuilder(context, itemIndex)
-                      : const SizedBox.shrink(),
-                ),
+                itemIndex < itemCount
+                    ? itemBuilder(context, itemIndex)
+                    : const SizedBox.shrink(),
               );
             }
 
@@ -150,9 +151,11 @@ class ResponsiveSliverGrid extends StatelessWidget {
               padding: EdgeInsets.only(
                 bottom: rowIndex == rowCount - 1 ? 0 : runSpacing ?? spacing,
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: rowChildren,
+              child: Table(
+                columnWidths: columnWidths,
+                defaultVerticalAlignment:
+                    TableCellVerticalAlignment.intrinsicHeight,
+                children: <TableRow>[TableRow(children: rowChildren)],
               ),
             );
           }, childCount: rowCount),

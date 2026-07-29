@@ -546,9 +546,10 @@ That can become unsafe when:
 - Cards contain optional information
 - Different records need different amounts of vertical space
 
-`ResponsiveSliverGrid` creates lazy, content-driven rows. The next row begins
-after the tallest card in the previous row, so text is not forced into a fixed
-card height. Cards within a row may have different visible heights.
+`ResponsiveSliverGrid` creates lazy, content-driven rows. Every card in a row
+adopts that row's tallest content height, producing an aligned grid without
+forcing one fixed height across the entire list. The next row calculates its
+height independently.
 
 #### Sliver nesting rules
 
