@@ -23,6 +23,7 @@ persisted Material 3 themes.
 - Material 3 colors, typography, spacing, radii, and component themes
 - Responsive small-phone, phone, tablet, and expanded layouts
 - Adaptive spacing, typography, content widths, grids, and narrow controls
+- Working paginated DummyJSON Products feature with pull-to-refresh
 - Shared page and error widgets
 - Strict analyzer rules plus unit and widget tests
 
@@ -65,7 +66,8 @@ persisted Material 3 themes.
 │   │   └── widgets/              # App-wide widgets
 │   ├── l10n/                     # ARB resources and generated localizations
 │   ├── features/
-│   │   └── home/
+│   │   ├── home/                 # Local template overview
+│   │   └── products/             # Complete paginated API example
 │   │       ├── data/
 │   │       │   ├── datasources/
 │   │       │   ├── models/
@@ -964,6 +966,47 @@ single-write persistence, Bangla rendering, and Arabic RTL directionality:
 flutter test test/core/localization test/widget_test.dart
 ```
 
+## Sample Products feature
+
+The Home page links to `/products`, a complete reference feature backed by the
+free [DummyJSON Products API](https://dummyjson.com/docs/products). It requires
+no account or authentication and supports pagination through `limit` and
+`skip`.
+
+The example demonstrates:
+
+- Dio requests through the shared `NetworkService`
+- `limit`, `skip`, and response-field selection
+- Dartz `Either<Failure, ProductPageResult>`
+- Freezed API models and paginated presentation state
+- Data-model-to-domain-entity mapping
+- Repository and use-case boundaries
+- Generated Riverpod dependency injection and async controller
+- First-page loading/error and later-page loading/error separation
+- Item deduplication while appending pages
+- Pull-to-refresh
+- `PaginatedResponsiveGridView` with lazy responsive rows
+- English, Bangla, and Arabic presentation strings
+- A named GoRouter route from Home
+
+The endpoint used by the remote data source is:
+
+```text
+GET /products?limit=12&skip=0&select=id,title,description,category,price,rating,thumbnail
+```
+
+Use this feature as the reference when adding a real API-backed module. Replace
+the sample base URL and response models while keeping the domain, repository,
+controller, and presentation boundaries.
+
+Products coverage includes response decoding, request parameters, first and
+later pages, later-page failure preservation, responsive pagination, and route
+navigation:
+
+```sh
+flutter test test/features/products test/core/responsive test/widget_test.dart
+```
+
 ## Environment configuration
 
 The application reads compile-time values through `AppConfig`.
@@ -973,7 +1016,7 @@ The application reads compile-time values through `AppConfig`.
 ```json
 {
   "APP_ENV": "development",
-  "API_BASE_URL": "https://dev-api.example.com"
+  "API_BASE_URL": "https://dummyjson.com"
 }
 ```
 
@@ -982,11 +1025,13 @@ The application reads compile-time values through `AppConfig`.
 ```json
 {
   "APP_ENV": "production",
-  "API_BASE_URL": "https://api.example.com"
+  "API_BASE_URL": "https://dummyjson.com"
 }
 ```
 
-Replace the placeholder URLs with the appropriate API hosts.
+Both template configurations use DummyJSON so the Products example works
+immediately. Replace these URLs with the appropriate development and production
+API hosts when integrating the real backend.
 
 Run development:
 

@@ -178,6 +178,60 @@ abstract class AppLocalizations {
   /// **'Typed CRUD, caching, and centralized error handling.'**
   String get featureNetworkDescription;
 
+  /// No description provided for @productsBrowseAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse sample products'**
+  String get productsBrowseAction;
+
+  /// No description provided for @productsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Products'**
+  String get productsTitle;
+
+  /// No description provided for @productsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A real paginated API example using Dio, Dartz, Riverpod, Freezed, and the responsive grid.'**
+  String get productsDescription;
+
+  /// No description provided for @productsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing {count} products'**
+  String productsCount(int count);
+
+  /// No description provided for @productsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load products.'**
+  String get productsLoadError;
+
+  /// No description provided for @productsLoadMoreError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load the next page of products.'**
+  String get productsLoadMoreError;
+
+  /// No description provided for @productsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No products are available.'**
+  String get productsEmpty;
+
+  /// No description provided for @productsEndOfList.
+  ///
+  /// In en, this message translates to:
+  /// **'You have reached the end.'**
+  String get productsEndOfList;
+
+  /// No description provided for @productImageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Image of {title}'**
+  String productImageLabel(String title);
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:

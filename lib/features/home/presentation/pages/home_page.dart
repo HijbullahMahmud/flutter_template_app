@@ -79,6 +79,12 @@ class _HomeContent extends StatelessWidget {
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
+                    const SizedBox(height: AppSizes.space16),
+                    FilledButton.icon(
+                      onPressed: () => context.goNamed(AppRouteNames.products),
+                      icon: const Icon(Icons.shopping_bag_outlined),
+                      label: Text(context.locale.productsBrowseAction),
+                    ),
                   ],
                 ),
               ),

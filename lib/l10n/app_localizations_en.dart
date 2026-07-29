@@ -53,6 +53,39 @@ class AppLocalizationsEn extends AppLocalizations {
       'Typed CRUD, caching, and centralized error handling.';
 
   @override
+  String get productsBrowseAction => 'Browse sample products';
+
+  @override
+  String get productsTitle => 'Products';
+
+  @override
+  String get productsDescription =>
+      'A real paginated API example using Dio, Dartz, Riverpod, Freezed, and the responsive grid.';
+
+  @override
+  String productsCount(int count) {
+    return 'Showing $count products';
+  }
+
+  @override
+  String get productsLoadError => 'Could not load products.';
+
+  @override
+  String get productsLoadMoreError =>
+      'Could not load the next page of products.';
+
+  @override
+  String get productsEmpty => 'No products are available.';
+
+  @override
+  String get productsEndOfList => 'You have reached the end.';
+
+  @override
+  String productImageLabel(String title) {
+    return 'Image of $title';
+  }
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override

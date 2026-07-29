@@ -16,6 +16,29 @@
   "featureRiverpodDescription": "Generated providers and testable state.",
   "featureNetworkTitle": "Dio networking",
   "featureNetworkDescription": "Typed CRUD, caching, and centralized error handling.",
+  "productsBrowseAction": "Browse sample products",
+  "productsTitle": "Products",
+  "productsDescription": "A real paginated API example using Dio, Dartz, Riverpod, Freezed, and the responsive grid.",
+  "productsCount": "Showing {count} products",
+  "@productsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "productsLoadError": "Could not load products.",
+  "productsLoadMoreError": "Could not load the next page of products.",
+  "productsEmpty": "No products are available.",
+  "productsEndOfList": "You have reached the end.",
+  "productImageLabel": "Image of {title}",
+  "@productImageLabel": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "settingsTitle": "Settings",
   "appearanceTitle": "Appearance",
   "appearanceDescription": "System follows the current light or dark setting of the device.",

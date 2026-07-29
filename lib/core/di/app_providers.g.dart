@@ -355,3 +355,140 @@ final class GetTemplateFeaturesProvider
 
 String _$getTemplateFeaturesHash() =>
     r'f9769954d3447bf0862c0a4d192941caa9e6bbd5';
+
+@ProviderFor(productsRemoteDataSource)
+final productsRemoteDataSourceProvider = ProductsRemoteDataSourceProvider._();
+
+final class ProductsRemoteDataSourceProvider
+    extends
+        $FunctionalProvider<
+          ProductsRemoteDataSource,
+          ProductsRemoteDataSource,
+          ProductsRemoteDataSource
+        >
+    with $Provider<ProductsRemoteDataSource> {
+  ProductsRemoteDataSourceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'productsRemoteDataSourceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$productsRemoteDataSourceHash();
+
+  @$internal
+  @override
+  $ProviderElement<ProductsRemoteDataSource> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  ProductsRemoteDataSource create(Ref ref) {
+    return productsRemoteDataSource(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ProductsRemoteDataSource value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ProductsRemoteDataSource>(value),
+    );
+  }
+}
+
+String _$productsRemoteDataSourceHash() =>
+    r'60ac9557db4f824ff54950175e2f7a90949a0bbf';
+
+@ProviderFor(productsRepository)
+final productsRepositoryProvider = ProductsRepositoryProvider._();
+
+final class ProductsRepositoryProvider
+    extends
+        $FunctionalProvider<
+          ProductsRepository,
+          ProductsRepository,
+          ProductsRepository
+        >
+    with $Provider<ProductsRepository> {
+  ProductsRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'productsRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$productsRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<ProductsRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  ProductsRepository create(Ref ref) {
+    return productsRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ProductsRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ProductsRepository>(value),
+    );
+  }
+}
+
+String _$productsRepositoryHash() =>
+    r'bf77cc7f29f5325c43cb518cf3ce93ef8ee34d6e';
+
+@ProviderFor(getProducts)
+final getProductsProvider = GetProductsProvider._();
+
+final class GetProductsProvider
+    extends $FunctionalProvider<GetProducts, GetProducts, GetProducts>
+    with $Provider<GetProducts> {
+  GetProductsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'getProductsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$getProductsHash();
+
+  @$internal
+  @override
+  $ProviderElement<GetProducts> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  GetProducts create(Ref ref) {
+    return getProducts(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(GetProducts value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<GetProducts>(value),
+    );
+  }
+}
+
+String _$getProductsHash() => r'37c9952643a3ced83fcc272f899a84e029110430';

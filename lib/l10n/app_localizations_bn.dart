@@ -53,6 +53,38 @@ class AppLocalizationsBn extends AppLocalizations {
       'টাইপড CRUD, ক্যাশিং এবং কেন্দ্রীভূত ত্রুটি ব্যবস্থাপনা।';
 
   @override
+  String get productsBrowseAction => 'নমুনা পণ্য দেখুন';
+
+  @override
+  String get productsTitle => 'পণ্য';
+
+  @override
+  String get productsDescription =>
+      'Dio, Dartz, Riverpod, Freezed এবং রেসপনসিভ গ্রিড ব্যবহার করে একটি বাস্তব পেজিনেটেড API উদাহরণ।';
+
+  @override
+  String productsCount(int count) {
+    return '$countটি পণ্য দেখানো হচ্ছে';
+  }
+
+  @override
+  String get productsLoadError => 'পণ্য লোড করা যায়নি।';
+
+  @override
+  String get productsLoadMoreError => 'পণ্যের পরবর্তী পৃষ্ঠা লোড করা যায়নি।';
+
+  @override
+  String get productsEmpty => 'কোনো পণ্য পাওয়া যায়নি।';
+
+  @override
+  String get productsEndOfList => 'আপনি তালিকার শেষে পৌঁছেছেন।';
+
+  @override
+  String productImageLabel(String title) {
+    return '$title-এর ছবি';
+  }
+
+  @override
   String get settingsTitle => 'সেটিংস';
 
   @override

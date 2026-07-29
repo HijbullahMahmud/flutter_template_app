@@ -7,6 +7,10 @@ import 'package:ag_pos/features/home/data/datasources/home_local_data_source.dar
 import 'package:ag_pos/features/home/data/repositories/home_repository_impl.dart';
 import 'package:ag_pos/features/home/domain/repositories/home_repository.dart';
 import 'package:ag_pos/features/home/domain/usecases/get_template_features.dart';
+import 'package:ag_pos/features/products/data/datasources/products_remote_data_source.dart';
+import 'package:ag_pos/features/products/data/repositories/products_repository_impl.dart';
+import 'package:ag_pos/features/products/domain/repositories/products_repository.dart';
+import 'package:ag_pos/features/products/domain/usecases/get_products.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
 import 'package:go_router/go_router.dart';
@@ -61,4 +65,19 @@ HomeRepository homeRepository(Ref ref) {
 @Riverpod(keepAlive: true)
 GetTemplateFeatures getTemplateFeatures(Ref ref) {
   return GetTemplateFeatures(ref.watch(homeRepositoryProvider));
+}
+
+@Riverpod(keepAlive: true)
+ProductsRemoteDataSource productsRemoteDataSource(Ref ref) {
+  return ProductsRemoteDataSourceImpl(ref.watch(networkServiceProvider));
+}
+
+@Riverpod(keepAlive: true)
+ProductsRepository productsRepository(Ref ref) {
+  return ProductsRepositoryImpl(ref.watch(productsRemoteDataSourceProvider));
+}
+
+@Riverpod(keepAlive: true)
+GetProducts getProducts(Ref ref) {
+  return GetProducts(ref.watch(productsRepositoryProvider));
 }

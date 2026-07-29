@@ -52,6 +52,38 @@ class AppLocalizationsAr extends AppLocalizations {
       'عمليات CRUD محددة النوع وتخزين مؤقت ومعالجة مركزية للأخطاء.';
 
   @override
+  String get productsBrowseAction => 'تصفح المنتجات التجريبية';
+
+  @override
+  String get productsTitle => 'المنتجات';
+
+  @override
+  String get productsDescription =>
+      'مثال حقيقي لواجهة API مقسمة إلى صفحات باستخدام Dio وDartz وRiverpod وFreezed والشبكة المتجاوبة.';
+
+  @override
+  String productsCount(int count) {
+    return 'يتم عرض $count منتجًا';
+  }
+
+  @override
+  String get productsLoadError => 'تعذر تحميل المنتجات.';
+
+  @override
+  String get productsLoadMoreError => 'تعذر تحميل الصفحة التالية من المنتجات.';
+
+  @override
+  String get productsEmpty => 'لا توجد منتجات متاحة.';
+
+  @override
+  String get productsEndOfList => 'لقد وصلت إلى نهاية القائمة.';
+
+  @override
+  String productImageLabel(String title) {
+    return 'صورة $title';
+  }
+
+  @override
   String get settingsTitle => 'الإعدادات';
 
   @override

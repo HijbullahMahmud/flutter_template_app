@@ -1,6 +1,7 @@
 import 'package:ag_pos/app/router/app_routes.dart';
 import 'package:ag_pos/core/widgets/not_found_page.dart';
 import 'package:ag_pos/features/home/presentation/pages/home_page.dart';
+import 'package:ag_pos/features/products/presentation/pages/products_page.dart';
 import 'package:ag_pos/features/settings/presentation/pages/settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +18,13 @@ abstract final class AppRouter {
             return const HomePage();
           },
           routes: <RouteBase>[
+            GoRoute(
+              path: AppRoutes.productsPath,
+              name: AppRouteNames.products,
+              builder: (BuildContext context, GoRouterState state) {
+                return const ProductsPage();
+              },
+            ),
             GoRoute(
               path: AppRoutes.settingsPath,
               name: AppRouteNames.settings,

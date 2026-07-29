@@ -1,12 +1,19 @@
 import 'package:ag_pos/app/router/app_routes.dart';
 import 'package:ag_pos/app/template_app.dart';
 import 'package:ag_pos/core/di/app_providers.dart';
+import 'package:ag_pos/core/error/failure.dart';
 import 'package:ag_pos/core/localization/app_locales.dart';
 import 'package:ag_pos/core/localization/locale_controller.dart';
 import 'package:ag_pos/core/localization/locale_preferences.dart';
 import 'package:ag_pos/core/theme/theme_controller.dart';
 import 'package:ag_pos/core/theme/theme_preferences.dart';
 import 'package:ag_pos/features/home/presentation/widgets/feature_card.dart';
+import 'package:ag_pos/features/products/domain/entities/product.dart';
+import 'package:ag_pos/features/products/domain/entities/product_page_result.dart';
+import 'package:ag_pos/features/products/domain/repositories/products_repository.dart';
+import 'package:ag_pos/features/products/domain/usecases/get_products.dart';
+import 'package:ag_pos/features/products/presentation/widgets/product_card.dart';
+import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -40,6 +47,21 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(container.read(themeControllerProvider), ThemeMode.dark);
+  });
+
+  testWidgets('navigates from home to the paginated products feature', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(_buildApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Browse sample products'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Products'), findsOneWidget);
+    expect(find.text('Demo product'), findsOneWidget);
+    expect(find.byType(ProductCard), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('selects, persists, and renders supported languages', (
@@ -169,12 +191,42 @@ Widget _buildApp({
     overrides: [
       themePreferencesProvider.overrideWithValue(_FakeThemePreferences()),
       initialLocaleProvider.overrideWithValue(initialLocale),
+      getProductsProvider.overrideWithValue(
+        GetProducts(_FakeProductsRepository()),
+      ),
       localePreferencesProvider.overrideWithValue(
         localePreferences ?? _FakeLocalePreferences(),
       ),
     ],
     child: const TemplateApp(),
   );
+}
+
+class _FakeProductsRepository implements ProductsRepository {
+  @override
+  Future<Either<Failure, ProductPageResult>> getProducts({
+    required int skip,
+    required int limit,
+  }) async {
+    return const Right<Failure, ProductPageResult>(
+      ProductPageResult(
+        items: <Product>[
+          Product(
+            id: 1,
+            title: 'Demo product',
+            description: 'A product loaded through the clean architecture.',
+            category: 'demo',
+            price: 9.99,
+            rating: 4.5,
+            thumbnailUrl: 'https://example.com/product.png',
+          ),
+        ],
+        total: 1,
+        skip: 0,
+        limit: 12,
+      ),
+    );
+  }
 }
 
 class _FakeThemePreferences implements ThemePreferences {
