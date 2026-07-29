@@ -69,16 +69,37 @@ by multiple features.
 
 ## Environment configuration
 
-Configuration uses `--dart-define`, so secrets are not committed:
+Compile-time configuration files are stored in `config/`:
 
-```sh
-flutter run \
-  --dart-define=APP_ENV=development \
-  --dart-define=API_BASE_URL=https://dev-api.example.com
+```text
+config/
+├── dev.json
+└── prod.json
 ```
 
-Read values through `AppConfig`. Do not store real secrets in a client app;
-anything shipped in an application binary can be extracted.
+Run the development configuration:
+
+```sh
+flutter run --dart-define-from-file=config/dev.json
+```
+
+Build a production Android App Bundle:
+
+```sh
+flutter build appbundle --release \
+  --dart-define-from-file=config/prod.json
+```
+
+Build a production APK:
+
+```sh
+flutter build apk --release \
+  --dart-define-from-file=config/prod.json
+```
+
+Read values through `AppConfig`. The committed files should contain public
+build-time configuration only. Do not put secrets in these files: values
+compiled into an application binary can be extracted.
 
 ## Theme and fonts
 
