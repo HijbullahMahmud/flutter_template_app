@@ -253,6 +253,14 @@ three. Available width, not the platform name, determines the final result.
 for short static collections such as dashboard shortcuts or settings cards. It
 builds every child, so do not use it for an unbounded API result.
 
+Choose the grid component by ownership and data size:
+
+| Component | Use when |
+| --- | --- |
+| `ResponsiveGrid` | The collection is small, static, and already loaded |
+| `ResponsiveSliverGrid` | A custom sliver screen needs lazy grid construction |
+| `PaginatedResponsiveGridView` | A normal API-backed grid needs pagination |
+
 ### Paginate an API-backed grid
 
 Use `PaginatedResponsiveGridView` for a growing API result. It combines a
@@ -377,9 +385,175 @@ while `isLoadingMore` is true. Store a later-page failure in
 `onLoadMore` must return the controller's `Future<void>`. The grid guards that
 future so repeated scroll notifications cannot start duplicate requests.
 
-For a custom sliver page, use `ResponsiveSliverGrid` directly and keep the
-pagination trigger in the containing feature. For normal API lists,
-`PaginatedResponsiveGridView` is the preferred component.
+### Compose a custom sliver screen
+
+Use `ResponsiveSliverGrid` directly when the feature already owns a
+`CustomScrollView` and needs several sections to scroll as one surface. Typical
+examples include:
+
+- A collapsible or pinned `SliverAppBar`
+- Search and filter sections
+- Promotional banners
+- A responsive product grid
+- Another list below the grid
+- A feature-specific pagination footer
+
+```dart
+CustomScrollView(
+  slivers: [
+    const SliverAppBar(
+      pinned: true,
+      title: Text('Products'),
+    ),
+    const SliverToBoxAdapter(
+      child: ProductSearchBar(),
+    ),
+    SliverPadding(
+      padding: const EdgeInsets.all(AppSizes.space16),
+      sliver: ResponsiveSliverGrid(
+        itemCount: products.length,
+        minimumItemWidth: AppSizes.cardMinWidth,
+        maximumColumns: 3,
+        spacing: AppSizes.space16,
+        itemBuilder: (context, index) {
+          return ProductCard(
+            key: ValueKey(products[index].id),
+            product: products[index],
+          );
+        },
+      ),
+    ),
+    const SliverToBoxAdapter(
+      child: ProductPaginationFooter(),
+    ),
+  ],
+)
+```
+
+`ResponsiveSliverGrid` only handles lazy responsive layout. It does not own a
+scroll controller or automatically request another page. This is useful when
+the containing feature has custom scroll behavior or pagination rules.
+
+For example, a feature can own the scroll controller:
+
+```dart
+class ProductPage extends StatefulWidget {
+  const ProductPage({super.key});
+
+  @override
+  State<ProductPage> createState() => _ProductPageState();
+}
+
+class _ProductPageState extends State<ProductPage> {
+  final _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_handleScroll);
+  }
+
+  void _handleScroll() {
+    if (!_scrollController.hasClients) {
+      return;
+    }
+
+    final position = _scrollController.position;
+    if (position.extentAfter < 400) {
+      // Call the Riverpod controller. The controller must guard against
+      // duplicate requests and stop when hasMore is false.
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController
+      ..removeListener(_handleScroll)
+      ..dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      controller: _scrollController,
+      slivers: [
+        ResponsiveSliverGrid(
+          itemCount: products.length,
+          itemBuilder: (context, index) {
+            return ProductCard(product: products[index]);
+          },
+        ),
+      ],
+    );
+  }
+}
+```
+
+Prefer `PaginatedResponsiveGridView` when this custom control is unnecessary;
+it already implements the scroll threshold and duplicate-request guard.
+
+#### Why not use a standard `SliverGrid`?
+
+A standard `SliverGrid` commonly uses a fixed aspect ratio or fixed row extent.
+That can become unsafe when:
+
+- Bangla or Arabic text occupies additional lines
+- Accessibility text scaling is enabled
+- Cards contain optional information
+- Different records need different amounts of vertical space
+
+`ResponsiveSliverGrid` creates lazy, content-driven rows. The next row begins
+after the tallest card in the previous row, so text is not forced into a fixed
+card height. Cards within a row may have different visible heights.
+
+#### Sliver nesting rules
+
+A sliver cannot be placed in the regular `children` collection of `ListView`,
+`Column`, or `SingleChildScrollView`.
+
+Incorrect:
+
+```dart
+ListView(
+  children: [
+    ResponsiveSliverGrid(
+      itemCount: products.length,
+      itemBuilder: buildProduct,
+    ),
+  ],
+)
+```
+
+Also incorrect:
+
+```dart
+SingleChildScrollView(
+  child: ResponsiveSliverGrid(
+    itemCount: products.length,
+    itemBuilder: buildProduct,
+  ),
+)
+```
+
+Correct:
+
+```dart
+CustomScrollView(
+  slivers: [
+    ResponsiveSliverGrid(
+      itemCount: products.length,
+      itemBuilder: buildProduct,
+    ),
+  ],
+)
+```
+
+The practical rule is:
+
+- Static dashboard cards → `ResponsiveGrid`
+- Normal paginated API grid → `PaginatedResponsiveGridView`
+- Advanced `CustomScrollView` composition → `ResponsiveSliverGrid`
 
 ### Switch between mobile and tablet structures
 
