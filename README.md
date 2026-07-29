@@ -114,7 +114,9 @@ Shared implementation lives in `lib/core/responsive/`:
 - `ResponsiveValue<T>` keeps breakpoint-specific values declarative.
 - `AppResponsiveMetrics` provides page padding, card padding, and layout gaps.
 - `ResponsiveBuilder` exposes those metrics from current constraints.
-- `ResponsiveGrid` calculates columns from a minimum card width.
+- `ResponsiveGrid` lays out a small, already-loaded collection.
+- `ResponsiveSliverGrid` lazily builds rows inside a custom scroll view.
+- `PaginatedResponsiveGridView` requests API pages near the scroll boundary.
 - `ResponsiveConstrainedBox` keeps content centered and readable.
 
 Typical imports for a responsive presentation page:
@@ -123,6 +125,7 @@ Typical imports for a responsive presentation page:
 import 'package:ag_pos/core/constants/app_sizes.dart';
 import 'package:ag_pos/core/extensions/build_context_extensions.dart';
 import 'package:ag_pos/core/responsive/app_breakpoints.dart';
+import 'package:ag_pos/core/responsive/paginated_responsive_grid_view.dart';
 import 'package:ag_pos/core/responsive/responsive_builder.dart';
 import 'package:ag_pos/core/responsive/responsive_value.dart';
 import 'package:ag_pos/core/widgets/app_page.dart';
@@ -245,6 +248,138 @@ ResponsiveGrid(
 The grid calculates how many minimum-width cards fit. A small phone normally
 gets one column, a tablet normally gets two, and an expanded layout can get
 three. Available width, not the platform name, determines the final result.
+
+`ResponsiveGrid` uses `Wrap` and receives an existing list of widgets. Use it
+for short static collections such as dashboard shortcuts or settings cards. It
+builds every child, so do not use it for an unbounded API result.
+
+### Paginate an API-backed grid
+
+Use `PaginatedResponsiveGridView` for a growing API result. It combines a
+`CustomScrollView` with `ResponsiveSliverGrid`, so only visible rows are built.
+It preserves content-driven card height instead of forcing localized text into
+a fixed grid aspect ratio.
+
+The widget handles presentation-level pagination behavior:
+
+- Responsive 1–3 column layout
+- Lazy row construction
+- Next-page request near the end of the scroll extent
+- Automatic next-page request when loaded content does not fill the viewport
+- Duplicate in-flight request protection
+- Loading, pagination-error, empty, and end-of-list presentation
+- Paused automatic retry while `loadMoreError` is present
+
+The feature's Riverpod controller remains responsible for:
+
+- Fetching the first page
+- Calling its repository or use case
+- Tracking the next page or cursor
+- Appending and deduplicating items
+- Updating `hasMore` and `isLoadingMore`
+- Converting `Failure` objects into feature state
+- Retrying a failed request
+
+A feature pagination state normally contains:
+
+```dart
+@freezed
+abstract class ProductListState with _$ProductListState {
+  const factory ProductListState({
+    @Default(<Product>[]) List<Product> items,
+    @Default(true) bool hasMore,
+    @Default(false) bool isLoadingMore,
+    Failure? loadMoreFailure,
+    String? nextCursor,
+  }) = _ProductListState;
+}
+```
+
+The page passes that state to the grid:
+
+```dart
+class ProductPage extends ConsumerWidget {
+  const ProductPage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final products = ref.watch(productsControllerProvider);
+
+    return AppPage(
+      title: context.locale.productsTitle,
+      body: products.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stackTrace) => AppErrorView(
+          message: context.locale.productsLoadError,
+          onRetry: () => ref.invalidate(productsControllerProvider),
+        ),
+        data: (state) {
+          return ResponsiveBuilder(
+            builder: (context, metrics) {
+              return PaginatedResponsiveGridView(
+                itemCount: state.items.length,
+                itemBuilder: (context, index) {
+                  final product = state.items[index];
+                  return ProductCard(
+                    key: ValueKey(product.id),
+                    product: product,
+                  );
+                },
+                hasMore: state.hasMore,
+                isLoadingMore: state.isLoadingMore,
+                onLoadMore: () {
+                  return ref
+                      .read(productsControllerProvider.notifier)
+                      .loadNextPage();
+                },
+                minimumItemWidth: AppSizes.cardMinWidth,
+                maximumColumns: 3,
+                spacing: metrics.gridGap,
+                padding: EdgeInsets.symmetric(
+                  horizontal: metrics.horizontalPadding,
+                  vertical: metrics.verticalPadding,
+                ),
+                emptyState: Center(
+                  child: Text(context.locale.productsEmpty),
+                ),
+                loadMoreError: state.loadMoreFailure == null
+                    ? null
+                    : Padding(
+                        padding: const EdgeInsets.all(AppSizes.space16),
+                        child: Center(
+                          child: FilledButton.tonal(
+                            onPressed: () {
+                              ref
+                                  .read(
+                                    productsControllerProvider.notifier,
+                                  )
+                                  .loadNextPage();
+                            },
+                            child: Text(context.locale.tryAgain),
+                          ),
+                        ),
+                      ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+```
+
+The first page should use the controller's top-level `AsyncLoading` and
+`AsyncError` states. After data is visible, keep the existing items on screen
+while `isLoadingMore` is true. Store a later-page failure in
+`loadMoreFailure`; do not replace the whole screen with an error page.
+
+`onLoadMore` must return the controller's `Future<void>`. The grid guards that
+future so repeated scroll notifications cannot start duplicate requests.
+
+For a custom sliver page, use `ResponsiveSliverGrid` directly and keep the
+pagination trigger in the containing feature. For normal API lists,
+`PaginatedResponsiveGridView` is the preferred component.
 
 ### Switch between mobile and tablet structures
 
