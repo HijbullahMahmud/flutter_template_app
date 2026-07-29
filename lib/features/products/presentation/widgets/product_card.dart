@@ -1,6 +1,7 @@
 import 'package:ag_pos/core/constants/app_sizes.dart';
 import 'package:ag_pos/core/extensions/build_context_extensions.dart';
 import 'package:ag_pos/core/responsive/responsive_builder.dart';
+import 'package:ag_pos/core/widgets/app_loading_indicator.dart';
 import 'package:ag_pos/features/products/domain/entities/product.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -45,8 +46,10 @@ class ProductCard extends StatelessWidget {
                           if (progress == null) {
                             return child;
                           }
-                          return const Center(
-                            child: CircularProgressIndicator(),
+                          return Center(
+                            child: AppLoadingIndicator(
+                              semanticLabel: context.locale.loadingLabel,
+                            ),
                           );
                         },
                     errorBuilder:

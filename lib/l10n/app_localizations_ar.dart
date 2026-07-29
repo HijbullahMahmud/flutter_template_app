@@ -119,6 +119,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get languageArabic => 'العربية';
 
   @override
+  String get loadingLabel => 'جارٍ التحميل';
+
+  @override
   String get tryAgain => 'حاول مرة أخرى';
 
   @override

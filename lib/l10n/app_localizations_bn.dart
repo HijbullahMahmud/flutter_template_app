@@ -120,6 +120,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get languageArabic => 'আরবি';
 
   @override
+  String get loadingLabel => 'লোড হচ্ছে';
+
+  @override
   String get tryAgain => 'আবার চেষ্টা করুন';
 
   @override

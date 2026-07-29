@@ -1,4 +1,5 @@
 import 'package:ag_pos/core/responsive/responsive_builder.dart';
+import 'package:ag_pos/core/widgets/app_loading_indicator.dart';
 import 'package:flutter/material.dart';
 
 typedef LoadNextPage = Future<void> Function();
@@ -207,7 +208,7 @@ class _PaginatedResponsiveGridViewState
                 widget.loadingIndicator ??
                 const Padding(
                   padding: EdgeInsets.all(24),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: AppLoadingView(),
                 ),
           )
         else if (loadMoreError != null)

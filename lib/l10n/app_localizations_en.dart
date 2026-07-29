@@ -121,6 +121,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageArabic => 'Arabic';
 
   @override
+  String get loadingLabel => 'Loading';
+
+  @override
   String get tryAgain => 'Try again';
 
   @override

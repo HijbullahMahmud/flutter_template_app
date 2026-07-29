@@ -6,6 +6,7 @@ import 'package:ag_pos/core/responsive/paginated_responsive_grid_view.dart';
 import 'package:ag_pos/core/responsive/responsive_builder.dart';
 import 'package:ag_pos/core/responsive/responsive_value.dart';
 import 'package:ag_pos/core/widgets/app_error_view.dart';
+import 'package:ag_pos/core/widgets/app_loading_indicator.dart';
 import 'package:ag_pos/core/widgets/app_page.dart';
 import 'package:ag_pos/features/products/presentation/providers/products_controller.dart';
 import 'package:ag_pos/features/products/presentation/providers/products_state.dart';
@@ -48,7 +49,7 @@ class ProductsPage extends ConsumerWidget {
             unawaited(ref.read(productsControllerProvider.notifier).reload());
           },
         ),
-        _ => const Center(child: CircularProgressIndicator()),
+        _ => AppLoadingView(semanticLabel: context.locale.loadingLabel),
       },
     );
   }

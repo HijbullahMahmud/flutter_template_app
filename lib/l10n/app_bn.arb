@@ -33,6 +33,7 @@
   "languageEnglish": "ইংরেজি",
   "languageBangla": "বাংলা",
   "languageArabic": "আরবি",
+  "loadingLabel": "লোড হচ্ছে",
   "tryAgain": "আবার চেষ্টা করুন",
   "notFoundMessage": "{location} ঠিকানায় কোনো পৃষ্ঠা নেই",
   "backToHome": "হোমে ফিরে যান"

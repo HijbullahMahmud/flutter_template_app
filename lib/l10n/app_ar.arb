@@ -33,6 +33,7 @@
   "languageEnglish": "الإنجليزية",
   "languageBangla": "البنغالية",
   "languageArabic": "العربية",
+  "loadingLabel": "جارٍ التحميل",
   "tryAgain": "حاول مرة أخرى",
   "notFoundMessage": "لا توجد صفحة في {location}",
   "backToHome": "العودة إلى الرئيسية"

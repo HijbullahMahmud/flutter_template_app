@@ -3,6 +3,7 @@ import 'package:ag_pos/core/constants/app_sizes.dart';
 import 'package:ag_pos/core/extensions/build_context_extensions.dart';
 import 'package:ag_pos/core/responsive/responsive_builder.dart';
 import 'package:ag_pos/core/widgets/app_error_view.dart';
+import 'package:ag_pos/core/widgets/app_loading_indicator.dart';
 import 'package:ag_pos/core/widgets/app_page.dart';
 import 'package:ag_pos/features/home/domain/entities/template_feature.dart';
 import 'package:ag_pos/features/home/presentation/providers/home_controller.dart';
@@ -36,7 +37,7 @@ class HomePage extends ConsumerWidget {
           message: context.locale.homeLoadError,
           onRetry: () => ref.read(homeControllerProvider.notifier).reload(),
         ),
-        _ => const Center(child: CircularProgressIndicator()),
+        _ => AppLoadingView(semanticLabel: context.locale.loadingLabel),
       },
     );
   }

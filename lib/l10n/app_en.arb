@@ -50,6 +50,7 @@
   "languageEnglish": "English",
   "languageBangla": "Bangla",
   "languageArabic": "Arabic",
+  "loadingLabel": "Loading",
   "tryAgain": "Try again",
   "notFoundMessage": "No page exists at {location}",
   "@notFoundMessage": {

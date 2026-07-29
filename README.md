@@ -24,7 +24,7 @@ persisted Material 3 themes.
 - Responsive small-phone, phone, tablet, and expanded layouts
 - Adaptive spacing, typography, content widths, grids, and narrow controls
 - Working paginated DummyJSON Products feature with pull-to-refresh
-- Shared page and error widgets
+- Shared page, error, and platform-adaptive loading widgets
 - Strict analyzer rules plus unit and widget tests
 
 ## Main packages
@@ -357,7 +357,9 @@ class ProductPage extends ConsumerWidget {
     return AppPage(
       title: context.locale.productsTitle,
       body: products.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => AppLoadingView(
+          semanticLabel: context.locale.loadingLabel,
+        ),
         error: (error, stackTrace) => AppErrorView(
           message: context.locale.productsLoadError,
           onRetry: () => ref.invalidate(productsControllerProvider),
@@ -870,6 +872,38 @@ flutter run --dart-define-from-file=config/dev.json
 
 Generated localization, `.g.dart`, and `.freezed.dart` files are part of the
 source tree. Do not edit generated files manually.
+
+## Adaptive loading indicators
+
+Use the shared loading widgets instead of placing platform indicators directly
+in feature code:
+
+| Platform | Indicator |
+| --- | --- |
+| Android, Windows, Linux, web | Material `CircularProgressIndicator` |
+| iOS, macOS | `CupertinoActivityIndicator` |
+
+For a full-page loading state:
+
+```dart
+AppLoadingView(
+  semanticLabel: context.locale.loadingLabel,
+)
+```
+
+For an inline loader, such as an image placeholder or button:
+
+```dart
+AppLoadingIndicator(
+  size: 24,
+  semanticLabel: context.locale.loadingLabel,
+)
+```
+
+Both widgets accept `size`, `color`, and an optional accessibility
+`semanticLabel`. Material loaders also use the configurable `strokeWidth`.
+`PaginatedResponsiveGridView` uses the adaptive indicator by default, while
+still allowing a feature to provide its own `loadingIndicator`.
 
 ## Localization
 
