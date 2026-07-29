@@ -13,7 +13,7 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    expect(container.read(themeModeProvider), ThemeMode.system);
+    expect(container.read(themeControllerProvider), ThemeMode.system);
   });
 
   test('restores the supplied saved theme', () {
@@ -25,7 +25,7 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    expect(container.read(themeModeProvider), ThemeMode.dark);
+    expect(container.read(themeControllerProvider), ThemeMode.dark);
   });
 
   test('updates and persists theme mode', () async {
@@ -36,13 +36,13 @@ void main() {
     addTearDown(container.dispose);
 
     await container
-        .read(themeModeProvider.notifier)
+        .read(themeControllerProvider.notifier)
         .setThemeMode(ThemeMode.dark);
     await container
-        .read(themeModeProvider.notifier)
+        .read(themeControllerProvider.notifier)
         .setThemeMode(ThemeMode.dark);
 
-    expect(container.read(themeModeProvider), ThemeMode.dark);
+    expect(container.read(themeControllerProvider), ThemeMode.dark);
     expect(preferences.savedMode, ThemeMode.dark);
     expect(preferences.writeCount, 1);
   });

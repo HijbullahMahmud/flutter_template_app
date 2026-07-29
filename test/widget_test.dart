@@ -26,7 +26,7 @@ void main() {
 
     final appContext = tester.element(find.byType(MaterialApp));
     final container = ProviderScope.containerOf(appContext);
-    expect(container.read(themeModeProvider), ThemeMode.system);
+    expect(container.read(themeControllerProvider), ThemeMode.system);
 
     container.read(routerProvider).goNamed(AppRouteNames.settings);
     await tester.pumpAndSettle();
@@ -35,7 +35,7 @@ void main() {
     await tester.tap(find.text('Dark'));
     await tester.pumpAndSettle();
 
-    expect(container.read(themeModeProvider), ThemeMode.dark);
+    expect(container.read(themeControllerProvider), ThemeMode.dark);
   });
 }
 

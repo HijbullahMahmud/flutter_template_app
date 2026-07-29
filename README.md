@@ -8,11 +8,14 @@ and automatic device theme selection.
 
 - Feature-first clean architecture (`data`, `domain`, `presentation`)
 - Centralized named routes and a 404 page with GoRouter
-- Riverpod state management, async state, and dependency composition
+- Generated Riverpod providers/notifiers and async state
+- Dio CRUD networking with bearer auth, cache interceptor, and typed failures
+- Dartz `Either<Failure, T>` repository and network results
+- Freezed and JSON-serializable data models
 - Persisted Material 3 theme selection; `ThemeMode.system` is the default
 - Color, typography, spacing, radius, and responsive layout tokens
 - Shared page and error widgets
-- Typed `Result<T>` and `Failure` primitives
+- Comprehensive transport, HTTP, cache, serialization, and unknown failures
 - Compile-time environment configuration
 - Stricter analyzer rules and starter unit/widget tests
 
@@ -30,8 +33,8 @@ lib/
 │   ├── di/                       # Application dependency composition
 │   ├── error/                    # Typed failures
 │   ├── extensions/               # Shared Dart/Flutter extensions
+│   ├── network/                  # Dio client, CRUD service, cache, error mapper
 │   ├── theme/                    # Colors, typography, ThemeData, controller
-│   ├── types/                    # Shared result types
 │   └── widgets/                  # App-wide reusable widgets
 └── features/
     └── feature_name/
@@ -46,8 +49,8 @@ Dependencies point inward:
 presentation → domain ← data
 ```
 
-The domain layer should remain independent of Flutter and external packages.
-Repository interfaces live in `domain`; implementations live in `data`.
+The domain layer remains independent of Flutter and infrastructure packages.
+Its repository contracts use Dartz `Either`; implementations live in `data`.
 
 ## Start developing
 
@@ -66,6 +69,54 @@ Add a feature by copying the `features/home` layer structure, then:
 
 Avoid placing feature-specific code in `core`; `core` is only for code shared
 by multiple features.
+
+## Networking
+
+`NetworkService` is the shared entry point for remote data sources. It supports
+GET, POST, PUT, PATCH, and DELETE and always returns
+`Future<Either<Failure, T>>`.
+
+```dart
+final result = await ref.read(networkServiceProvider).get<UserModel>(
+  '/users/42',
+  decoder: (data) => UserModel.fromJson(data! as Map<String, dynamic>),
+);
+
+return result.fold(
+  (failure) => throw failure,
+  (user) => user,
+);
+```
+
+GET requests use the cache interceptor by default. Use
+`RequestCachePolicy.refresh` for pull-to-refresh or
+`RequestCachePolicy.noCache` for always-online reads. Mutating requests are not
+cached. The default cache is a bounded in-memory LRU store and can be replaced
+by overriding `cacheOptionsProvider`.
+
+`authTokenSourceProvider` currently returns an empty token source. Override it
+with an `AccessTokenProvider` backed by secure storage when authentication is
+implemented. Request and response bodies are not logged in release builds.
+
+The error mapper covers Dio timeouts, transformation timeouts, certificate
+errors, cancellation, connection failures, every HTTP 4xx/5xx response,
+serialization failures, cache failures, and unexpected errors. Server-provided
+validation messages are retained when available.
+
+## Generated code
+
+Use Freezed for every data model and Riverpod annotations for providers and
+notifiers. After changing an annotated file, regenerate code:
+
+```sh
+dart run build_runner build
+```
+
+During development, use watch mode:
+
+```sh
+dart run build_runner watch
+```
 
 ## Environment configuration
 

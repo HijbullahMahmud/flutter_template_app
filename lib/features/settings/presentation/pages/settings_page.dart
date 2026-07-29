@@ -11,7 +11,7 @@ class SettingsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedMode = ref.watch(themeModeProvider);
+    final selectedMode = ref.watch(themeControllerProvider);
 
     return AppPage(
       title: 'Settings',
@@ -49,7 +49,7 @@ class SettingsPage extends ConsumerWidget {
             onSelectionChanged: (Set<ThemeMode> selection) {
               unawaited(
                 ref
-                    .read(themeModeProvider.notifier)
+                    .read(themeControllerProvider.notifier)
                     .setThemeMode(selection.first),
               );
             },

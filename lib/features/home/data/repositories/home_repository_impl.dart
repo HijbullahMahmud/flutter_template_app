@@ -1,8 +1,8 @@
 import 'package:ag_pos/core/error/failure.dart';
-import 'package:ag_pos/core/types/result.dart';
 import 'package:ag_pos/features/home/data/datasources/home_local_data_source.dart';
 import 'package:ag_pos/features/home/domain/entities/template_feature.dart';
 import 'package:ag_pos/features/home/domain/repositories/home_repository.dart';
+import 'package:dartz/dartz.dart';
 
 class HomeRepositoryImpl implements HomeRepository {
   const HomeRepositoryImpl(this._localDataSource);
@@ -10,13 +10,20 @@ class HomeRepositoryImpl implements HomeRepository {
   final HomeLocalDataSource _localDataSource;
 
   @override
-  Future<Result<List<TemplateFeature>>> getTemplateFeatures() async {
+  Future<Either<Failure, List<TemplateFeature>>> getTemplateFeatures() async {
     try {
-      final features = await _localDataSource.getTemplateFeatures();
-      return Success<List<TemplateFeature>>(features);
-    } on Object catch (error) {
-      return ResultFailure<List<TemplateFeature>>(
-        UnknownFailure('Unable to load template features.', error),
+      final models = await _localDataSource.getTemplateFeatures();
+      final features = models
+          .map((model) => model.toEntity())
+          .toList(growable: false);
+      return Right<Failure, List<TemplateFeature>>(features);
+    } on Object catch (error, stackTrace) {
+      return Left<Failure, List<TemplateFeature>>(
+        CacheFailure(
+          message: 'Unable to load template features.',
+          cause: error,
+          stackTrace: stackTrace,
+        ),
       );
     }
   }

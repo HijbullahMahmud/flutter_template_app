@@ -1,20 +1,19 @@
 import 'package:ag_pos/core/theme/theme_preferences.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-final initialThemeModeProvider = Provider<ThemeMode>(
-  (Ref ref) => ThemeMode.system,
-);
+part 'theme_controller.g.dart';
 
-final themePreferencesProvider = Provider<ThemePreferences>(
-  (Ref ref) => SharedPreferencesThemePreferences(),
-);
+@Riverpod(keepAlive: true)
+ThemeMode initialThemeMode(Ref ref) => ThemeMode.system;
 
-final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(
-  ThemeModeNotifier.new,
-);
+@Riverpod(keepAlive: true)
+ThemePreferences themePreferences(Ref ref) {
+  return SharedPreferencesThemePreferences();
+}
 
-class ThemeModeNotifier extends Notifier<ThemeMode> {
+@Riverpod(keepAlive: true)
+class ThemeController extends _$ThemeController {
   @override
   ThemeMode build() => ref.watch(initialThemeModeProvider);
 
