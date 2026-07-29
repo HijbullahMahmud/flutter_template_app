@@ -1,140 +1,133 @@
 # Flutter Clean Architecture Starter
 
-A ready-to-extend Flutter application template using feature-first clean
-architecture, GoRouter, Riverpod, explicit dependency injection, Material 3,
-and automatic device theme selection.
+A ready-to-extend Flutter template with feature-first clean architecture,
+generated Riverpod state and dependency injection, GoRouter, Dio networking,
+Freezed models, environment configuration, and persisted Material 3 themes.
 
 ## Included
 
-- Feature-first clean architecture (`data`, `domain`, `presentation`)
-- Centralized named routes and a 404 page with GoRouter
-- Generated Riverpod providers/notifiers and async state
-- Dio CRUD networking with bearer auth, cache interceptor, and typed failures
-- Dartz `Either<Failure, T>` repository and network results
-- Freezed and JSON-serializable data models
-- Persisted Material 3 theme selection; `ThemeMode.system` is the default
-- Color, typography, spacing, radius, and responsive layout tokens
+- Feature-first `data`, `domain`, and `presentation` layers
+- Generated Riverpod providers and async notifiers
+- Named GoRouter routes, nested navigation, and a 404 page
+- Dio GET, POST, PUT, PATCH, and DELETE support
+- Dio cache interceptor with configurable request policies
+- Bearer-token interceptor ready for secure token storage
+- Dartz `Either<Failure, T>` results
+- Typed transport, HTTP, cache, serialization, and unknown failures
+- Freezed immutable models with generated JSON serialization
+- Development and production `dart-define` files
+- Persisted light, dark, and system theme selection
+- Material 3 colors, typography, spacing, radii, and component themes
 - Shared page and error widgets
-- Comprehensive transport, HTTP, cache, serialization, and unknown failures
-- Compile-time environment configuration
-- Stricter analyzer rules and starter unit/widget tests
+- Strict analyzer rules plus unit and widget tests
+
+## Main packages
+
+| Area | Packages |
+| --- | --- |
+| State and DI | `flutter_riverpod`, `riverpod_annotation`, `riverpod_generator` |
+| Navigation | `go_router` |
+| Networking | `dio`, `dio_cache_interceptor` |
+| Functional results | `dartz` |
+| Models | `freezed_annotation`, `freezed`, `json_annotation`, `json_serializable` |
+| Persistence | `shared_preferences` |
+| Generation | `build_runner` |
 
 ## Project structure
 
 ```text
-lib/
-├── app/
-│   ├── bootstrap.dart            # Framework startup and root error boundary
-│   ├── router/                   # Route paths, names, and GoRouter config
-│   └── template_app.dart         # MaterialApp composition
-├── core/
-│   ├── config/                   # Compile-time application config
-│   ├── constants/                # Shared design/layout tokens
-│   ├── di/                       # Application dependency composition
-│   ├── error/                    # Typed failures
-│   ├── extensions/               # Shared Dart/Flutter extensions
-│   ├── network/                  # Dio client, CRUD service, cache, error mapper
-│   ├── theme/                    # Colors, typography, ThemeData, controller
-│   └── widgets/                  # App-wide reusable widgets
-└── features/
-    └── feature_name/
-        ├── data/                 # Data sources, DTOs, repository impls
-        ├── domain/               # Entities, repository contracts, use cases
-        └── presentation/         # Pages, widgets, Riverpod notifiers
+.
+├── config/
+│   ├── dev.json
+│   └── prod.json
+├── lib/
+│   ├── app/
+│   │   ├── bootstrap.dart
+│   │   ├── router/
+│   │   └── template_app.dart
+│   ├── core/
+│   │   ├── config/               # Compile-time environment values
+│   │   ├── constants/            # Shared spacing and layout tokens
+│   │   ├── di/                   # Generated application providers
+│   │   ├── error/                # Failure types
+│   │   ├── extensions/           # Shared extensions
+│   │   ├── network/              # Dio, CRUD, cache, auth, error mapping
+│   │   ├── theme/                # ThemeData, tokens, persistence, notifier
+│   │   └── widgets/              # App-wide widgets
+│   ├── features/
+│   │   └── home/
+│   │       ├── data/
+│   │       │   ├── datasources/
+│   │       │   ├── models/
+│   │       │   └── repositories/
+│   │       ├── domain/
+│   │       │   ├── entities/
+│   │       │   ├── repositories/
+│   │       │   └── usecases/
+│   │       └── presentation/
+│   │           ├── pages/
+│   │           ├── providers/
+│   │           └── widgets/
+│   └── main.dart
+└── test/
 ```
 
-Dependencies point inward:
+Dependencies point toward the domain:
 
 ```text
 presentation → domain ← data
 ```
 
-The domain layer remains independent of Flutter and infrastructure packages.
-Its repository contracts use Dartz `Either`; implementations live in `data`.
+- `domain` contains business entities, repository contracts, and use cases.
+- `data` contains Freezed models, data sources, mapping, and repository
+  implementations.
+- `presentation` contains generated Riverpod notifiers, pages, and widgets.
+- `core` contains infrastructure shared by multiple features.
 
-## Start developing
+Keep feature-specific code out of `core`.
+
+## Getting started
 
 ```sh
 flutter pub get
-flutter run
-```
-
-Add a feature by copying the `features/home` layer structure, then:
-
-1. Define entities, repository contracts, and use cases in `domain`.
-2. Implement data sources and repositories in `data`.
-3. Add controllers and UI in `presentation`.
-4. Register dependencies in `lib/core/di/app_providers.dart`.
-5. Register pages in `lib/app/router/app_router.dart`.
-
-Avoid placing feature-specific code in `core`; `core` is only for code shared
-by multiple features.
-
-## Networking
-
-`NetworkService` is the shared entry point for remote data sources. It supports
-GET, POST, PUT, PATCH, and DELETE and always returns
-`Future<Either<Failure, T>>`.
-
-```dart
-final result = await ref.read(networkServiceProvider).get<UserModel>(
-  '/users/42',
-  decoder: (data) => UserModel.fromJson(data! as Map<String, dynamic>),
-);
-
-return result.fold(
-  (failure) => throw failure,
-  (user) => user,
-);
-```
-
-GET requests use the cache interceptor by default. Use
-`RequestCachePolicy.refresh` for pull-to-refresh or
-`RequestCachePolicy.noCache` for always-online reads. Mutating requests are not
-cached. The default cache is a bounded in-memory LRU store and can be replaced
-by overriding `cacheOptionsProvider`.
-
-`authTokenSourceProvider` currently returns an empty token source. Override it
-with an `AccessTokenProvider` backed by secure storage when authentication is
-implemented. Request and response bodies are not logged in release builds.
-
-The error mapper covers Dio timeouts, transformation timeouts, certificate
-errors, cancellation, connection failures, every HTTP 4xx/5xx response,
-serialization failures, cache failures, and unexpected errors. Server-provided
-validation messages are retained when available.
-
-## Generated code
-
-Use Freezed for every data model and Riverpod annotations for providers and
-notifiers. After changing an annotated file, regenerate code:
-
-```sh
 dart run build_runner build
+flutter run --dart-define-from-file=config/dev.json
 ```
 
-During development, use watch mode:
-
-```sh
-dart run build_runner watch
-```
+Generated `.g.dart` and `.freezed.dart` files are part of the source tree. Do
+not edit them manually.
 
 ## Environment configuration
 
-Compile-time configuration files are stored in `config/`:
+The application reads compile-time values through `AppConfig`.
 
-```text
-config/
-├── dev.json
-└── prod.json
+`config/dev.json`:
+
+```json
+{
+  "APP_ENV": "development",
+  "API_BASE_URL": "https://dev-api.example.com"
+}
 ```
 
-Run the development configuration:
+`config/prod.json`:
+
+```json
+{
+  "APP_ENV": "production",
+  "API_BASE_URL": "https://api.example.com"
+}
+```
+
+Replace the placeholder URLs with the appropriate API hosts.
+
+Run development:
 
 ```sh
 flutter run --dart-define-from-file=config/dev.json
 ```
 
-Build a production Android App Bundle:
+Build a production App Bundle:
 
 ```sh
 flutter build appbundle --release \
@@ -148,26 +141,325 @@ flutter build apk --release \
   --dart-define-from-file=config/prod.json
 ```
 
-Read values through `AppConfig`. The committed files should contain public
-build-time configuration only. Do not put secrets in these files: values
-compiled into an application binary can be extracted.
+These files must contain public build-time configuration only. Values compiled
+into a client application can be extracted, so never place secrets in them.
+
+## Networking
+
+Remote data sources should receive `NetworkService` through constructor
+injection. Do not create separate Dio instances inside features.
+
+```dart
+class UserRemoteDataSource {
+  const UserRemoteDataSource(this._networkService);
+
+  final NetworkService _networkService;
+
+  Future<Either<Failure, UserModel>> getUser(int id) {
+    return _networkService.get<UserModel>(
+      '/users/$id',
+      decoder: (data) {
+        return UserModel.fromJson(data! as Map<String, dynamic>);
+      },
+    );
+  }
+
+  Future<Either<Failure, UserModel>> createUser(
+    Map<String, dynamic> body,
+  ) {
+    return _networkService.post<UserModel>(
+      '/users',
+      data: body,
+      decoder: (data) {
+        return UserModel.fromJson(data! as Map<String, dynamic>);
+      },
+    );
+  }
+}
+```
+
+Register the data source with a generated provider:
+
+```dart
+part 'user_providers.g.dart';
+
+@riverpod
+UserRemoteDataSource userRemoteDataSource(Ref ref) {
+  return UserRemoteDataSource(ref.watch(networkServiceProvider));
+}
+```
+
+### CRUD API
+
+Every method requires a typed decoder and returns
+`Future<Either<Failure, T>>`.
+
+| Method | Body | Query parameters | Cache policy |
+| --- | --- | --- | --- |
+| `get<T>` | No | Yes | Yes |
+| `post<T>` | Yes | Yes | No |
+| `put<T>` | Yes | Yes | No |
+| `patch<T>` | Yes | Yes | No |
+| `delete<T>` | Optional | Yes | No |
+
+All methods also accept Dio `Options` and a `CancelToken`.
+
+Decode a list response:
+
+```dart
+final result = await networkService.get<List<UserModel>>(
+  '/users',
+  queryParameters: <String, dynamic>{'page': 1},
+  decoder: (data) {
+    final items = data! as List<dynamic>;
+    return items
+        .map(
+          (item) => UserModel.fromJson(item! as Map<String, dynamic>),
+        )
+        .toList(growable: false);
+  },
+);
+```
+
+Consume a result without exceptions:
+
+```dart
+return result.fold(
+  (failure) {
+    // Convert to feature state or return the failure from the repository.
+    return Left(failure);
+  },
+  (users) {
+    return Right(users.map((model) => model.toEntity()).toList());
+  },
+);
+```
+
+### Cache behavior
+
+GET requests default to `RequestCachePolicy.useCache`.
+
+```dart
+await networkService.get<UserModel>(
+  '/users/42',
+  cachePolicy: RequestCachePolicy.refresh,
+  decoder: (data) {
+    return UserModel.fromJson(data! as Map<String, dynamic>);
+  },
+);
+```
+
+Available policies:
+
+- `useCache`: respect server cache directives and use a cached response when
+  appropriate.
+- `refresh`: fetch from the server and refresh the cached entry.
+- `noCache`: bypass the cache for that request.
+
+The default store is a bounded in-memory LRU cache:
+
+- Maximum total size: 10 MB
+- Maximum entry size: 1 MB
+- Maximum stale duration: 7 days
+- Cached fallback on connection failure
+- Cached fallback for HTTP 500, 502, 503, and 504
+- POST caching disabled; other mutations are not cached
+
+Override `cacheOptionsProvider` if the product requires a persistent or
+encrypted cache.
+
+### Authentication
+
+`AuthInterceptor` reads a token from `AccessTokenProvider` and adds:
+
+```text
+Authorization: Bearer <token>
+```
+
+The template uses `EmptyAccessTokenProvider`, so unauthenticated requests work
+without additional setup. When authentication is implemented, provide a secure
+storage-backed implementation by overriding `authTokenSourceProvider`.
+
+Do not store access or refresh tokens in `SharedPreferences`.
+
+### Timeouts and logging
+
+The Dio client has 30-second connection, send, and receive timeouts. A
+`LogInterceptor` is enabled only in debug mode. Request bodies are available in
+debug logs; response bodies are disabled, and no Dio logger is installed in
+release builds.
+
+## Error handling
+
+Network and repository operations return `Either<Failure, T>`. Inspect
+`failure.type` to produce feature-specific behavior.
+
+| Failure type | Source |
+| --- | --- |
+| `connectionTimeout` | Connection could not be established in time |
+| `sendTimeout` | Request upload timed out |
+| `receiveTimeout` | Response or HTTP 408 timed out |
+| `transformTimeout` | Dio response transformation timed out |
+| `badCertificate` | TLS certificate validation failed |
+| `cancelled` | Request was cancelled |
+| `noConnection` | DNS, socket, or connectivity failure |
+| `badRequest` | HTTP 400 or another unclassified 4xx response |
+| `unauthorized` | HTTP 401 |
+| `forbidden` | HTTP 403 |
+| `notFound` | HTTP 404 |
+| `conflict` | HTTP 409 |
+| `validation` | HTTP 422 |
+| `rateLimited` | HTTP 429 |
+| `server` | HTTP 5xx |
+| `cache` | Local data/cache operation failed |
+| `serialization` | A response decoder rejected the payload |
+| `unknown` | Any unexpected error |
+
+The mapper retains server messages from `message`, `error`, `detail`, or
+`title`. It also flattens common field-validation payloads under `errors`.
+
+## Freezed models
+
+Use Freezed for every data model/DTO. Keep domain entities independent of JSON
+and infrastructure concerns.
+
+```dart
+part 'user_model.freezed.dart';
+part 'user_model.g.dart';
+
+@freezed
+abstract class UserModel with _$UserModel {
+  const factory UserModel({
+    required int id,
+    required String name,
+  }) = _UserModel;
+
+  const UserModel._();
+
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return _$UserModelFromJson(json);
+  }
+
+  User toEntity() => User(id: id, name: name);
+}
+```
+
+After adding or changing a model, regenerate its implementation.
+
+## Riverpod annotations
+
+Use `@riverpod` or `@Riverpod(keepAlive: true)` for every provider and notifier.
+Do not manually construct `Provider`, `NotifierProvider`, or
+`AsyncNotifierProvider`.
+
+Function provider:
+
+```dart
+@riverpod
+UserRepository userRepository(Ref ref) {
+  return UserRepositoryImpl(ref.watch(userRemoteDataSourceProvider));
+}
+```
+
+Async notifier:
+
+```dart
+@riverpod
+class UsersController extends _$UsersController {
+  @override
+  Future<List<User>> build() async {
+    final result = await ref.watch(getUsersProvider)();
+    return result.fold(
+      (failure) => throw StateError(failure.message),
+      (users) => users,
+    );
+  }
+}
+```
+
+Providers are auto-disposed by default. Use `keepAlive: true` only for
+application-level dependencies that should live for the entire provider scope.
+
+## Code generation
+
+Generate once:
+
+```sh
+dart run build_runner build
+```
+
+Watch during development:
+
+```sh
+dart run build_runner watch
+```
+
+If stale generated files conflict, stop the watcher, remove only the affected
+generated file, and run the build command again.
+
+## Routing
+
+Route paths and names live in `lib/app/router/app_routes.dart`. GoRouter
+composition lives in `lib/app/router/app_router.dart`.
+
+When adding a page:
+
+1. Add its path and route name.
+2. Register its `GoRoute`.
+3. Navigate with `goNamed`, `pushNamed`, or typed path parameters.
+
+Unknown routes render the shared 404 page.
 
 ## Theme and fonts
 
-The app starts with `ThemeMode.system`, automatically matching the device when
-no preference has been saved. A light, dark, or system selection made in
-Settings is restored on future launches. Brand colors are in `app_colors.dart`,
-typography is in `app_typography.dart`, and component styles are in
-`app_theme.dart`.
+The default theme mode is `ThemeMode.system`. A user selection of system, light,
+or dark is persisted with `SharedPreferencesAsync` and restored before the
+first application frame. Missing, invalid, or unreadable values fall back to
+system mode.
 
-The template deliberately uses each platform's native font. To use a brand font,
-add local font files to `assets/fonts`, register them under `flutter.fonts` in
-`pubspec.yaml`, and set `AppTypography.fontFamily`.
+- Colors: `lib/core/theme/app_colors.dart`
+- Typography: `lib/core/theme/app_typography.dart`
+- Component themes: `lib/core/theme/app_theme.dart`
+- Persistence: `lib/core/theme/theme_preferences.dart`
+- Riverpod state: `lib/core/theme/theme_controller.dart`
+
+The template uses the platform font. To add a brand font:
+
+1. Add the font files under `assets/fonts/`.
+2. Register them in `pubspec.yaml`.
+3. Set `AppTypography.fontFamily`.
+
+## Adding a feature
+
+1. Create `data`, `domain`, and `presentation` folders.
+2. Define domain entities and repository contracts.
+3. Create Freezed data models and mapping methods.
+4. Implement remote/local data sources using shared infrastructure.
+5. Implement the repository and return `Either<Failure, T>`.
+6. Add use cases.
+7. Add annotated Riverpod providers/notifiers.
+8. Register routes.
+9. Run code generation.
+10. Add unit and widget tests.
 
 ## Quality checks
 
 ```sh
 dart format .
+dart run build_runner build
 flutter analyze
 flutter test
 ```
+
+Build verification:
+
+```sh
+flutter build apk --release \
+  --dart-define-from-file=config/prod.json
+```
+
+## Release signing
+
+The starter Android project currently uses the debug signing configuration for
+release builds. Configure a private production keystore before publishing an
+APK or App Bundle to Google Play.
