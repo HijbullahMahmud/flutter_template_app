@@ -1,10 +1,12 @@
 import 'dart:ui';
 
 import 'package:ag_pos/app/template_app.dart';
+import 'package:ag_pos/core/theme/theme_controller.dart';
+import 'package:ag_pos/core/theme/theme_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-void bootstrap() {
+Future<void> bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   FlutterError.onError = FlutterError.presentError;
@@ -15,5 +17,30 @@ void bootstrap() {
     return true;
   };
 
-  runApp(const ProviderScope(child: TemplateApp()));
+  final themePreferences = SharedPreferencesThemePreferences();
+  ThemeMode initialThemeMode;
+
+  try {
+    initialThemeMode = await themePreferences.loadThemeMode();
+  } on Object catch (error, stackTrace) {
+    initialThemeMode = ThemeMode.system;
+    FlutterError.reportError(
+      FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'theme preferences',
+        context: ErrorDescription('while loading the saved theme mode'),
+      ),
+    );
+  }
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        themePreferencesProvider.overrideWithValue(themePreferences),
+        initialThemeModeProvider.overrideWithValue(initialThemeMode),
+      ],
+      child: const TemplateApp(),
+    ),
+  );
 }

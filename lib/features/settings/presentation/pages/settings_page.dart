@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:ag_pos/core/constants/app_sizes.dart';
 import 'package:ag_pos/core/theme/theme_controller.dart';
 import 'package:ag_pos/core/widgets/app_page.dart';
@@ -45,9 +47,11 @@ class SettingsPage extends ConsumerWidget {
             ],
             selected: <ThemeMode>{selectedMode},
             onSelectionChanged: (Set<ThemeMode> selection) {
-              ref
-                  .read(themeModeProvider.notifier)
-                  .setThemeMode(selection.first);
+              unawaited(
+                ref
+                    .read(themeModeProvider.notifier)
+                    .setThemeMode(selection.first),
+              );
             },
           ),
         ],

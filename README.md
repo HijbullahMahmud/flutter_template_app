@@ -9,7 +9,7 @@ and automatic device theme selection.
 - Feature-first clean architecture (`data`, `domain`, `presentation`)
 - Centralized named routes and a 404 page with GoRouter
 - Riverpod state management, async state, and dependency composition
-- Light and dark Material 3 themes; `ThemeMode.system` is the default
+- Persisted Material 3 theme selection; `ThemeMode.system` is the default
 - Color, typography, spacing, radius, and responsive layout tokens
 - Shared page and error widgets
 - Typed `Result<T>` and `Failure` primitives
@@ -82,10 +82,11 @@ anything shipped in an application binary can be extracted.
 
 ## Theme and fonts
 
-The app starts with `ThemeMode.system`, automatically matching the device.
-Users can preview light and dark overrides from Settings. Brand colors are in
-`app_colors.dart`, typography is in `app_typography.dart`, and component styles
-are in `app_theme.dart`.
+The app starts with `ThemeMode.system`, automatically matching the device when
+no preference has been saved. A light, dark, or system selection made in
+Settings is restored on future launches. Brand colors are in `app_colors.dart`,
+typography is in `app_typography.dart`, and component styles are in
+`app_theme.dart`.
 
 The template deliberately uses each platform's native font. To use a brand font,
 add local font files to `assets/fonts`, register them under `flutter.fonts` in
