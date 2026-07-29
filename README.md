@@ -99,7 +99,7 @@ Keep feature-specific code out of `core`.
 ## Responsive layout
 
 Responsive decisions use available logical width instead of platform or device
-names:
+names. Do not maintain separate screens for individual devices.
 
 | Window class | Width | Typical use |
 | --- | ---: | --- |
@@ -117,31 +117,358 @@ Shared implementation lives in `lib/core/responsive/`:
 - `ResponsiveGrid` calculates columns from a minimum card width.
 - `ResponsiveConstrainedBox` keeps content centered and readable.
 
-Example:
+Typical imports for a responsive presentation page:
+
+```dart
+import 'package:ag_pos/core/constants/app_sizes.dart';
+import 'package:ag_pos/core/extensions/build_context_extensions.dart';
+import 'package:ag_pos/core/responsive/app_breakpoints.dart';
+import 'package:ag_pos/core/responsive/responsive_builder.dart';
+import 'package:ag_pos/core/responsive/responsive_value.dart';
+import 'package:ag_pos/core/widgets/app_page.dart';
+import 'package:flutter/material.dart';
+```
+
+The product types, callbacks, widgets, and localization keys in the following
+examples are illustrative. Add the feature-specific ARB messages and replace
+the placeholders when implementing a real feature.
+
+### Create a standard screen
+
+Start new presentation pages with `AppPage`. It supplies the shared scaffold,
+safe area, app bar, and centered maximum content width. The screen remains
+responsible for its scroll behavior and responsive padding:
+
+```dart
+class ProductPage extends StatelessWidget {
+  const ProductPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppPage(
+      title: context.locale.productsTitle,
+      body: ResponsiveBuilder(
+        builder: (context, metrics) {
+          return ListView(
+            padding: EdgeInsets.symmetric(
+              horizontal: metrics.horizontalPadding,
+              vertical: metrics.verticalPadding,
+            ),
+            children: [
+              Text(
+                context.locale.productsTitle,
+                style: Theme.of(context).textTheme.headlineLarge,
+              ),
+              SizedBox(height: metrics.sectionGap),
+              // Feature content.
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+```
+
+`ResponsiveBuilder` exposes:
+
+```dart
+metrics.width
+metrics.windowSize
+metrics.horizontalPadding
+metrics.verticalPadding
+metrics.cardPadding
+metrics.gridGap
+metrics.sectionGap
+
+metrics.isSmallPhone
+metrics.isPhone
+metrics.isTablet
+```
+
+### Choose a content width
+
+Use the narrowest width appropriate for the content:
+
+| Token | Width | Use |
+| --- | ---: | --- |
+| `AppSizes.formMaxWidth` | `680` | Forms and settings |
+| `AppSizes.readableTextMaxWidth` | `720` | Articles and long descriptions |
+| `AppSizes.contentMaxWidth` | `1100` | Dashboards and responsive grids |
+| `AppSizes.cardMinWidth` | `280` | Minimum grid-card width |
+
+A form should not stretch across an entire tablet:
+
+```dart
+return AppPage(
+  title: context.locale.createProductTitle,
+  maxContentWidth: AppSizes.formMaxWidth,
+  body: ResponsiveBuilder(
+    builder: (context, metrics) {
+      return ListView(
+        padding: EdgeInsets.symmetric(
+          horizontal: metrics.horizontalPadding,
+          vertical: metrics.verticalPadding,
+        ),
+        children: [
+          const TextField(),
+          SizedBox(height: metrics.gridGap),
+          const TextField(),
+          SizedBox(height: metrics.sectionGap),
+          FilledButton(
+            onPressed: saveProduct,
+            child: Text(context.locale.save),
+          ),
+        ],
+      );
+    },
+  ),
+);
+```
+
+### Create a responsive grid
+
+Use `ResponsiveGrid` rather than checking a device model or manually assigning
+columns:
+
+```dart
+ResponsiveGrid(
+  minimumItemWidth: AppSizes.cardMinWidth,
+  maximumColumns: 3,
+  spacing: metrics.gridGap,
+  children: products.map((product) {
+    return ProductCard(product: product);
+  }).toList(),
+)
+```
+
+The grid calculates how many minimum-width cards fit. A small phone normally
+gets one column, a tablet normally gets two, and an expanded layout can get
+three. Available width, not the platform name, determines the final result.
+
+### Switch between mobile and tablet structures
+
+Use separate `Column` and `Row` branches when the structure must change:
 
 ```dart
 ResponsiveBuilder(
   builder: (context, metrics) {
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: metrics.horizontalPadding,
-        vertical: metrics.verticalPadding,
-      ),
-      child: ResponsiveGrid(
-        minimumItemWidth: AppSizes.cardMinWidth,
-        spacing: metrics.gridGap,
-        children: cards,
-      ),
+    if (metrics.isPhone) {
+      return const Column(
+        children: [
+          ProductDetails(),
+          SizedBox(height: AppSizes.space16),
+          ProductSummary(),
+        ],
+      );
+    }
+
+    return const Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: ProductDetails()),
+        SizedBox(width: AppSizes.space24),
+        Expanded(child: ProductSummary()),
+      ],
     );
   },
 )
 ```
 
-`AppPage` constrains general content to `1100` logical pixels. Settings and
-other forms should use `AppSizes.formMaxWidth`; long text should use
-`AppSizes.readableTextMaxWidth`. Cards remain content-driven instead of using
-fixed heights. Tablet typography increases modestly, while Flutter's
-`MediaQuery` text scaling remains active for accessibility.
+Do not reuse an `Expanded` child from the tablet `Row` inside an unbounded
+mobile `Column`.
+
+### Select a value by breakpoint
+
+Use `ResponsiveValue<T>` when a component genuinely needs explicit values for
+every window class:
+
+```dart
+const imageHeight = ResponsiveValue<double>(
+  smallPhone: 160,
+  phone: 200,
+  tablet: 260,
+  expanded: 320,
+);
+
+final height = imageHeight.resolve(metrics.windowSize);
+```
+
+Prefer constraint-based widgets such as `ResponsiveGrid` when possible. Use
+`ResponsiveValue` for dimensions, counts, or component variants that cannot be
+derived naturally from constraints.
+
+### Build content-driven cards
+
+Cards must grow with localized and accessibility text. Use responsive padding
+and avoid a fixed height:
+
+```dart
+class ProductCard extends StatelessWidget {
+  const ProductCard({required this.product, super.key});
+
+  final Product product;
+
+  @override
+  Widget build(BuildContext context) {
+    return ResponsiveBuilder(
+      builder: (context, metrics) {
+        return Card(
+          child: Padding(
+            padding: EdgeInsets.all(metrics.cardPadding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  product.name,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: AppSizes.space8),
+                Text(product.description),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+```
+
+### Keep text safe inside rows
+
+Text placed beside an icon, image, button, or other fixed-width child should
+normally be wrapped in `Expanded` or `Flexible`:
+
+```dart
+Row(
+  children: [
+    const Icon(Icons.inventory_2_outlined),
+    const SizedBox(width: AppSizes.space12),
+    Expanded(
+      child: Text(
+        product.name,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
+    ),
+  ],
+)
+```
+
+Use ellipsis only when losing content is acceptable. Important descriptions
+should wrap naturally:
+
+```dart
+Expanded(child: Text(product.description))
+```
+
+### Adapt controls with long labels
+
+Controls that place several translated labels horizontally need a compact
+alternative. The Settings theme selector uses a vertical selector below
+`AppBreakpoints.segmentedControl`. A dropdown is another suitable option:
+
+```dart
+ResponsiveBuilder(
+  builder: (context, metrics) {
+    if (metrics.width < AppBreakpoints.segmentedControl) {
+      return DropdownButtonFormField<ProductStatus>(
+        isExpanded: true,
+        items: statusItems,
+        onChanged: onStatusChanged,
+      );
+    }
+
+    return SegmentedButton<ProductStatus>(
+      segments: statusSegments,
+      selected: {selectedStatus},
+      onSelectionChanged: (selection) {
+        onStatusChanged(selection.first);
+      },
+    );
+  },
+)
+```
+
+Buttons and other interactive controls should retain a minimum touch target of
+48 logical pixels.
+
+### Typography and accessibility
+
+Use `Theme.of(context).textTheme` instead of calculating font sizes from screen
+width:
+
+```dart
+Text(
+  context.locale.productsTitle,
+  style: Theme.of(context).textTheme.headlineLarge,
+)
+```
+
+The template increases typography modestly on tablets and expanded windows.
+Flutter's `MediaQuery` text scaling is applied afterwards, so the user's
+accessibility setting remains effective.
+
+Avoid:
+
+```dart
+// Do not scale text directly from the screen width.
+fontSize: MediaQuery.sizeOf(context).width * 0.04
+```
+
+Do not use `FittedBox` to force normal body text into a small area; it can make
+text unreadably small.
+
+### Complete screen example
+
+This is the recommended starting structure for a new list or dashboard screen:
+
+```dart
+class ExamplePage extends StatelessWidget {
+  const ExamplePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppPage(
+      title: context.locale.appName,
+      body: ResponsiveBuilder(
+        builder: (context, metrics) {
+          return ListView(
+            padding: EdgeInsets.symmetric(
+              horizontal: metrics.horizontalPadding,
+              vertical: metrics.verticalPadding,
+            ),
+            children: [
+              ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: AppSizes.readableTextMaxWidth,
+                ),
+                child: Text(
+                  context.locale.homeReadyDescription,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              ),
+              SizedBox(height: metrics.sectionGap),
+              ResponsiveGrid(
+                minimumItemWidth: AppSizes.cardMinWidth,
+                spacing: metrics.gridGap,
+                children: const [
+                  ExampleCard(),
+                  ExampleCard(),
+                  ExampleCard(),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+```
+
+### Implement a Figma design
 
 When implementing a Figma screen:
 
@@ -159,8 +486,21 @@ When implementing a Figma screen:
 Do not globally scale a Figma frame or use `FittedBox` for body text. Select
 layout, spacing, and component variants from constraints and let text wrap.
 
-Responsive widget coverage includes a 320×568 small phone at 2× text scale,
-Bangla compact settings, and a 1024×768 Arabic RTL tablet layout:
+### Responsive testing checklist
+
+Before finishing a screen, verify:
+
+- `320 × 568`: small phone
+- `390 × 844`: normal phone
+- `600 × 960`: small tablet
+- `1024 × 768`: expanded tablet
+- English, Bangla, and Arabic
+- Arabic right-to-left alignment
+- At least `2×` accessibility text scaling
+- No Flutter layout exceptions from `tester.takeException()`
+
+The template already covers a 320×568 small phone at 2× text scale, Bangla
+compact settings, and a 1024×768 Arabic RTL tablet:
 
 ```sh
 flutter test test/core/responsive test/widget_test.dart
