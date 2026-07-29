@@ -44,6 +44,7 @@ persisted Material 3 themes.
 ├── config/
 │   ├── dev.json
 │   └── prod.json
+├── l10n.yaml                     # Flutter gen-l10n configuration
 ├── lib/
 │   ├── app/
 │   │   ├── bootstrap.dart
@@ -59,6 +60,7 @@ persisted Material 3 themes.
 │   │   ├── network/              # Dio, CRUD, cache, auth, error mapping
 │   │   ├── theme/                # ThemeData, tokens, persistence, notifier
 │   │   └── widgets/              # App-wide widgets
+│   ├── l10n/                     # ARB resources and generated localizations
 │   ├── features/
 │   │   └── home/
 │   │       ├── data/
@@ -95,12 +97,13 @@ Keep feature-specific code out of `core`.
 
 ```sh
 flutter pub get
+flutter gen-l10n
 dart run build_runner build
 flutter run --dart-define-from-file=config/dev.json
 ```
 
-Generated `.g.dart` and `.freezed.dart` files are part of the source tree. Do
-not edit them manually.
+Generated localization, `.g.dart`, and `.freezed.dart` files are part of the
+source tree. Do not edit generated files manually.
 
 ## Localization
 
@@ -112,19 +115,39 @@ The template currently supports:
 | Bangla | `bn` | LTR |
 | Arabic | `ar` | RTL |
 
-English is used when no language has been saved. Selecting a language in
-Settings updates the application immediately and persists the choice with
-`SharedPreferencesAsync`. The saved locale is restored before the first frame.
-Missing or invalid values fall back to English.
+English is the explicit first-run default, even when the device uses another
+language. Selecting a language in Settings updates the application immediately
+and persists the choice with `SharedPreferencesAsync`. The saved locale is
+restored during bootstrap before the first frame. Missing, unsupported, invalid,
+or unreadable values fall back to English.
 
 Use localized strings in presentation and shared widgets through the
 `BuildContext` extension:
 
 ```dart
-Text(context.l10n.settingsTitle)
+Text(context.locale.settingsTitle)
 ```
 
-Translation resources live in:
+For several messages in one build method, keep a local reference:
+
+```dart
+final l10n = context.locale;
+
+return Column(
+  children: <Widget>[
+    Text(l10n.settingsTitle),
+    Text(l10n.languageDescription),
+  ],
+);
+```
+
+Keep user-facing presentation text in ARB resources. Domain entities and data
+models should not depend on `AppLocalizations`; translate display text at the
+presentation boundary.
+
+### Localization files
+
+Editable translation resources:
 
 ```text
 lib/l10n/
@@ -133,23 +156,91 @@ lib/l10n/
 └── app_ar.arb
 ```
 
-Add a message to `app_en.arb`, provide the same key in the Bangla and Arabic
-files, then generate localization classes:
+Generated files:
+
+```text
+lib/l10n/
+├── app_localizations.dart
+├── app_localizations_en.dart
+├── app_localizations_bn.dart
+└── app_localizations_ar.dart
+```
+
+`app_en.arb` is the template configured in `l10n.yaml`. Add a message there,
+provide the same key in Bangla and Arabic, and then regenerate:
 
 ```sh
 flutter gen-l10n
 ```
 
-To add another language:
+Example message with a placeholder:
 
-1. Add its ARB file, such as `app_es.arb`.
-2. Add its `Locale` to `AppLocales.supported`.
-3. Add its display name to the ARB resources and Settings selector.
-4. Add the locale to `CFBundleLocalizations` in `ios/Runner/Info.plist`.
-5. Run `flutter gen-l10n`.
+```json
+{
+  "welcomeUser": "Welcome, {name}",
+  "@welcomeUser": {
+    "description": "Greeting shown after login",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
+}
+```
 
-Flutter supplies RTL directionality automatically for Arabic because the
-selected locale is passed to `MaterialApp`.
+Presentation usage:
+
+```dart
+Text(context.locale.welcomeUser(user.name))
+```
+
+### Locale state and persistence
+
+Localization infrastructure is split by responsibility:
+
+- `app_locales.dart`: supported locales and English fallback.
+- `locale_preferences.dart`: `SharedPreferencesAsync` persistence.
+- `locale_controller.dart`: generated Riverpod state and save behavior.
+- `build_context_extensions.dart`: the `context.locale` presentation helper.
+- `bootstrap.dart`: restores the saved locale before `runApp`.
+- `template_app.dart`: delegates, supported locales, and current locale.
+
+Change the language from presentation code:
+
+```dart
+await ref
+    .read(localeControllerProvider.notifier)
+    .setLocale(AppLocales.bangla);
+```
+
+Only locales in `AppLocales.supported` are accepted. Selecting the active locale
+again does not perform another storage write.
+
+### Adding another language
+
+1. Create its ARB file, such as `lib/l10n/app_es.arb`.
+2. Translate every message defined by `app_en.arb`.
+3. Add its `Locale` constant and list entry in `AppLocales`.
+4. Add its localized display-name message to every ARB file.
+5. Add it to the Settings language selector.
+6. Add the locale code to `CFBundleLocalizations` in
+   `ios/Runner/Info.plist`.
+7. Run `flutter gen-l10n`.
+8. Add fallback, persistence, rendering, and directionality tests as
+   appropriate.
+
+Flutter includes the generated localization delegate plus global Material,
+Cupertino, and Widgets delegates. Because the selected locale is passed to
+`MaterialApp`, Arabic automatically renders with right-to-left directionality.
+No manual `Directionality` widget is required.
+
+Localization tests cover the English fallback, supported-locale validation,
+single-write persistence, Bangla rendering, and Arabic RTL directionality:
+
+```sh
+flutter test test/core/localization test/widget_test.dart
+```
 
 ## Environment configuration
 
