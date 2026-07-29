@@ -2,16 +2,14 @@ import 'package:ag_pos/core/constants/app_sizes.dart';
 import 'package:ag_pos/core/theme/theme_controller.dart';
 import 'package:ag_pos/core/widgets/app_page.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final selectedMode = context.select<ThemeController, ThemeMode>(
-      (ThemeController controller) => controller.themeMode,
-    );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedMode = ref.watch(themeModeProvider);
 
     return AppPage(
       title: 'Settings',
@@ -47,7 +45,9 @@ class SettingsPage extends StatelessWidget {
             ],
             selected: <ThemeMode>{selectedMode},
             onSelectionChanged: (Set<ThemeMode> selection) {
-              context.read<ThemeController>().setThemeMode(selection.first);
+              ref
+                  .read(themeModeProvider.notifier)
+                  .setThemeMode(selection.first);
             },
           ),
         ],

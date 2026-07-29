@@ -1,24 +1,19 @@
-import 'dart:async';
+import 'dart:ui';
 
 import 'package:ag_pos/app/template_app.dart';
-import 'package:ag_pos/core/di/app_providers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-Future<void> bootstrap() async {
+void bootstrap() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.presentError(details);
+  FlutterError.onError = FlutterError.presentError;
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stackTrace) {
+    FlutterError.reportError(
+      FlutterErrorDetails(exception: error, stack: stackTrace),
+    );
+    return true;
   };
 
-  await runZonedGuarded(
-    () async {
-      runApp(const AppProviders(child: TemplateApp()));
-    },
-    (Object error, StackTrace stackTrace) {
-      FlutterError.reportError(
-        FlutterErrorDetails(exception: error, stack: stackTrace),
-      );
-    },
-  );
+  runApp(const ProviderScope(child: TemplateApp()));
 }

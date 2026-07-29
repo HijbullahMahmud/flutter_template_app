@@ -1,39 +1,39 @@
+import 'package:ag_pos/core/di/app_providers.dart';
 import 'package:ag_pos/core/types/result.dart';
 import 'package:ag_pos/features/home/domain/entities/template_feature.dart';
-import 'package:ag_pos/features/home/domain/usecases/get_template_features.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum HomeStatus { initial, loading, success, failure }
+final homeControllerProvider =
+    AsyncNotifierProvider<HomeController, List<TemplateFeature>>(
+      HomeController.new,
+    );
 
-class HomeController extends ChangeNotifier {
-  HomeController(this._getTemplateFeatures);
+class HomeController extends AsyncNotifier<List<TemplateFeature>> {
+  @override
+  Future<List<TemplateFeature>> build() => _load();
 
-  final GetTemplateFeatures _getTemplateFeatures;
-
-  HomeStatus _status = HomeStatus.initial;
-  List<TemplateFeature> _features = const <TemplateFeature>[];
-  String? _errorMessage;
-
-  HomeStatus get status => _status;
-  List<TemplateFeature> get features => _features;
-  String? get errorMessage => _errorMessage;
-
-  Future<void> load() async {
-    _status = HomeStatus.loading;
-    _errorMessage = null;
-    notifyListeners();
-
-    final result = await _getTemplateFeatures();
-
-    switch (result) {
-      case Success<List<TemplateFeature>>(:final value):
-        _features = value;
-        _status = HomeStatus.success;
-      case ResultFailure<List<TemplateFeature>>(:final failure):
-        _status = HomeStatus.failure;
-        _errorMessage = failure.message;
-    }
-
-    notifyListeners();
+  Future<void> reload() async {
+    state = const AsyncLoading<List<TemplateFeature>>();
+    state = await AsyncValue.guard(_load);
   }
+
+  Future<List<TemplateFeature>> _load() async {
+    final useCase = ref.read(getTemplateFeaturesProvider);
+    final result = await useCase();
+
+    return switch (result) {
+      Success<List<TemplateFeature>>(:final value) => value,
+      ResultFailure<List<TemplateFeature>>(:final failure) =>
+        throw HomeFeatureException(failure.message),
+    };
+  }
+}
+
+class HomeFeatureException implements Exception {
+  const HomeFeatureException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
 }

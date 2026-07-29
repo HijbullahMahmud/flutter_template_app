@@ -1,14 +1,14 @@
 # Flutter Clean Architecture Starter
 
 A ready-to-extend Flutter application template using feature-first clean
-architecture, GoRouter, Provider, explicit dependency injection, Material 3,
+architecture, GoRouter, Riverpod, explicit dependency injection, Material 3,
 and automatic device theme selection.
 
 ## Included
 
 - Feature-first clean architecture (`data`, `domain`, `presentation`)
 - Centralized named routes and a 404 page with GoRouter
-- Provider state management and dependency composition
+- Riverpod state management, async state, and dependency composition
 - Light and dark Material 3 themes; `ThemeMode.system` is the default
 - Color, typography, spacing, radius, and responsive layout tokens
 - Shared page and error widgets
@@ -37,7 +37,7 @@ lib/
     └── feature_name/
         ├── data/                 # Data sources, DTOs, repository impls
         ├── domain/               # Entities, repository contracts, use cases
-        └── presentation/         # Pages, widgets, Provider controllers
+        └── presentation/         # Pages, widgets, Riverpod notifiers
 ```
 
 Dependencies point inward:

@@ -3,17 +3,20 @@ import 'package:ag_pos/core/config/app_config.dart';
 import 'package:ag_pos/core/constants/app_sizes.dart';
 import 'package:ag_pos/core/widgets/app_error_view.dart';
 import 'package:ag_pos/core/widgets/app_page.dart';
+import 'package:ag_pos/features/home/domain/entities/template_feature.dart';
 import 'package:ag_pos/features/home/presentation/providers/home_controller.dart';
 import 'package:ag_pos/features/home/presentation/widgets/feature_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final features = ref.watch(homeControllerProvider);
+
     return AppPage(
       title: AppConfig.appName,
       actions: <Widget>[
@@ -24,29 +27,24 @@ class HomePage extends StatelessWidget {
         ),
         const SizedBox(width: AppSizes.space8),
       ],
-      body: Consumer<HomeController>(
-        builder:
-            (BuildContext context, HomeController controller, Widget? child) {
-              return switch (controller.status) {
-                HomeStatus.initial || HomeStatus.loading => const Center(
-                  child: CircularProgressIndicator(),
-                ),
-                HomeStatus.failure => AppErrorView(
-                  message: controller.errorMessage ?? 'Something went wrong.',
-                  onRetry: controller.load,
-                ),
-                HomeStatus.success => _HomeContent(controller: controller),
-              };
-            },
-      ),
+      body: switch (features) {
+        AsyncData<List<TemplateFeature>>(:final value) => _HomeContent(
+          features: value,
+        ),
+        AsyncError<List<TemplateFeature>>(:final error) => AppErrorView(
+          message: error.toString(),
+          onRetry: () => ref.read(homeControllerProvider.notifier).reload(),
+        ),
+        _ => const Center(child: CircularProgressIndicator()),
+      },
     );
   }
 }
 
 class _HomeContent extends StatelessWidget {
-  const _HomeContent({required this.controller});
+  const _HomeContent({required this.features});
 
-  final HomeController controller;
+  final List<TemplateFeature> features;
 
   @override
   Widget build(BuildContext context) {
@@ -80,9 +78,9 @@ class _HomeContent extends StatelessWidget {
               return Wrap(
                 spacing: AppSizes.space16,
                 runSpacing: AppSizes.space16,
-                children: controller.features
+                children: features
                     .map(
-                      (feature) => SizedBox(
+                      (TemplateFeature feature) => SizedBox(
                         width: itemWidth,
                         child: FeatureCard(feature: feature),
                       ),

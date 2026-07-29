@@ -21,7 +21,7 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
         icon: TemplateFeatureIcon.routing,
       ),
       TemplateFeature(
-        title: 'Provider + DI',
+        title: 'Riverpod + DI',
         description: 'Explicit dependency composition and testable state.',
         icon: TemplateFeatureIcon.dependencyInjection,
       ),
