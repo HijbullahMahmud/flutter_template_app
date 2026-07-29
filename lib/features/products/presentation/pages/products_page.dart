@@ -4,6 +4,7 @@ import 'package:ag_pos/core/constants/app_sizes.dart';
 import 'package:ag_pos/core/extensions/build_context_extensions.dart';
 import 'package:ag_pos/core/responsive/paginated_responsive_grid_view.dart';
 import 'package:ag_pos/core/responsive/responsive_builder.dart';
+import 'package:ag_pos/core/responsive/responsive_value.dart';
 import 'package:ag_pos/core/widgets/app_error_view.dart';
 import 'package:ag_pos/core/widgets/app_page.dart';
 import 'package:ag_pos/features/products/presentation/providers/products_controller.dart';
@@ -11,6 +12,13 @@ import 'package:ag_pos/features/products/presentation/providers/products_state.d
 import 'package:ag_pos/features/products/presentation/widgets/product_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+const _productCardMinimumWidth = ResponsiveValue<double>(
+  smallPhone: AppSizes.cardMinWidth,
+  phone: 148,
+  tablet: 148,
+  expanded: 148,
+);
 
 class ProductsPage extends ConsumerWidget {
   const ProductsPage({super.key});
@@ -82,7 +90,9 @@ class _ProductsContent extends StatelessWidget {
             hasMore: state.hasMore,
             isLoadingMore: state.isLoadingMore,
             onLoadMore: onLoadMore,
-            minimumItemWidth: AppSizes.cardMinWidth,
+            minimumItemWidth: _productCardMinimumWidth.resolve(
+              metrics.windowSize,
+            ),
             maximumColumns: 3,
             spacing: metrics.gridGap,
             padding: pagePadding,

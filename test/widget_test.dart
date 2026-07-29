@@ -60,8 +60,43 @@ void main() {
 
     expect(find.text('Products'), findsOneWidget);
     expect(find.text('Demo product'), findsOneWidget);
-    expect(find.byType(ProductCard), findsOneWidget);
+    expect(find.byType(ProductCard), findsWidgets);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('products use one, two, and three responsive columns', (
+    WidgetTester tester,
+  ) async {
+    _configureView(tester, const Size(320, 700));
+    final cases = <(Size, int)>[
+      (const Size(320, 700), 1),
+      (const Size(390, 700), 2),
+      (const Size(600, 900), 3),
+    ];
+
+    for (final (size, expectedColumns) in cases) {
+      tester.view.physicalSize = size;
+      await tester.pumpWidget(_buildApp());
+      await tester.pumpAndSettle();
+
+      final appContext = tester.element(find.byType(MaterialApp));
+      final container = ProviderScope.containerOf(appContext);
+      container.read(routerProvider).goNamed(AppRouteNames.products);
+      await tester.pumpAndSettle();
+
+      final cards = find.byType(ProductCard);
+      expect(cards, findsAtLeastNWidgets(expectedColumns + 1));
+      final firstRowY = tester.getTopLeft(cards.at(0)).dy;
+
+      for (var index = 1; index < expectedColumns; index++) {
+        expect(tester.getTopLeft(cards.at(index)).dy, firstRowY);
+      }
+      expect(
+        tester.getTopLeft(cards.at(expectedColumns)).dy,
+        greaterThan(firstRowY),
+      );
+      expect(tester.takeException(), isNull);
+    }
   });
 
   testWidgets('selects, persists, and renders supported languages', (
@@ -208,20 +243,21 @@ class _FakeProductsRepository implements ProductsRepository {
     required int skip,
     required int limit,
   }) async {
-    return const Right<Failure, ProductPageResult>(
+    return Right<Failure, ProductPageResult>(
       ProductPageResult(
-        items: <Product>[
-          Product(
-            id: 1,
-            title: 'Demo product',
+        items: List<Product>.generate(
+          6,
+          (int index) => Product(
+            id: index + 1,
+            title: index == 0 ? 'Demo product' : 'Demo product ${index + 1}',
             description: 'A product loaded through the clean architecture.',
             category: 'demo',
-            price: 9.99,
+            price: 9.99 + index,
             rating: 4.5,
-            thumbnailUrl: 'https://example.com/product.png',
+            thumbnailUrl: 'https://example.com/product-${index + 1}.png',
           ),
-        ],
-        total: 1,
+        ),
+        total: 6,
         skip: 0,
         limit: 12,
       ),

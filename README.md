@@ -263,6 +263,36 @@ Choose the grid component by ownership and data size:
 | `ResponsiveSliverGrid` | A custom sliver screen needs lazy grid construction |
 | `PaginatedResponsiveGridView` | A normal API-backed grid needs pagination |
 
+The sample Products feature uses this explicit policy:
+
+| Device width | Product columns |
+| --- | ---: |
+| Below `360` | 1 |
+| `360–599` | 2 |
+| `600` and above | 3 |
+
+It keeps the small-phone card width comfortable while allowing denser product
+layouts elsewhere:
+
+```dart
+const productCardMinimumWidth = ResponsiveValue<double>(
+  smallPhone: AppSizes.cardMinWidth,
+  phone: 148,
+  tablet: 148,
+  expanded: 148,
+);
+```
+
+The value is passed to the grid:
+
+```dart
+minimumItemWidth: productCardMinimumWidth.resolve(metrics.windowSize),
+maximumColumns: 3,
+```
+
+The grid still checks its actual constraints, so it can reduce the column count
+instead of overflowing if a parent supplies less width than expected.
+
 ### Paginate an API-backed grid
 
 Use `PaginatedResponsiveGridView` for a growing API result. It combines a
@@ -342,7 +372,9 @@ class ProductPage extends ConsumerWidget {
                       .read(productsControllerProvider.notifier)
                       .loadNextPage();
                 },
-                minimumItemWidth: AppSizes.cardMinWidth,
+                minimumItemWidth: productCardMinimumWidth.resolve(
+                  metrics.windowSize,
+                ),
                 maximumColumns: 3,
                 spacing: metrics.gridGap,
                 padding: EdgeInsets.symmetric(
