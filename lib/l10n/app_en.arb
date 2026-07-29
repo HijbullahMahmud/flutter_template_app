@@ -1,0 +1,40 @@
+{
+  "@@locale": "en",
+  "appName": "Flutter Starter",
+  "@appName": {
+    "description": "Application name"
+  },
+  "settingsTooltip": "Settings",
+  "homeReadyTitle": "Ready for your features.",
+  "homeReadyDescription": "Replace this starter feature with your product modules. The app foundation is already wired.",
+  "homeLoadError": "Could not load the starter content.",
+  "featureArchitectureTitle": "Clean architecture",
+  "featureArchitectureDescription": "Feature-first data, domain, and presentation layers.",
+  "featureRoutingTitle": "GoRouter",
+  "featureRoutingDescription": "Centralized, named, and deep-link-ready navigation.",
+  "featureRiverpodTitle": "Riverpod + DI",
+  "featureRiverpodDescription": "Generated providers and testable state.",
+  "featureNetworkTitle": "Dio networking",
+  "featureNetworkDescription": "Typed CRUD, caching, and centralized error handling.",
+  "settingsTitle": "Settings",
+  "appearanceTitle": "Appearance",
+  "appearanceDescription": "System follows the current light or dark setting of the device.",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "languageTitle": "Language",
+  "languageDescription": "Choose the language used throughout the application.",
+  "languageEnglish": "English",
+  "languageBangla": "Bangla",
+  "languageArabic": "Arabic",
+  "tryAgain": "Try again",
+  "notFoundMessage": "No page exists at {location}",
+  "@notFoundMessage": {
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "backToHome": "Back to home"
+}

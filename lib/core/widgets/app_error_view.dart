@@ -1,4 +1,5 @@
 import 'package:ag_pos/core/constants/app_sizes.dart';
+import 'package:ag_pos/core/extensions/build_context_extensions.dart';
 import 'package:flutter/material.dart';
 
 class AppErrorView extends StatelessWidget {
@@ -26,7 +27,7 @@ class AppErrorView extends StatelessWidget {
               const SizedBox(height: AppSizes.space16),
               FilledButton.tonal(
                 onPressed: onRetry,
-                child: const Text('Try again'),
+                child: Text(context.locale.tryAgain),
               ),
             ],
           ],

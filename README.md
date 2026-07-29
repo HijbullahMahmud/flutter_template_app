@@ -2,7 +2,8 @@
 
 A ready-to-extend Flutter template with feature-first clean architecture,
 generated Riverpod state and dependency injection, GoRouter, Dio networking,
-Freezed models, environment configuration, and persisted Material 3 themes.
+Freezed models, generated localization, environment configuration, and
+persisted Material 3 themes.
 
 ## Included
 
@@ -16,6 +17,8 @@ Freezed models, environment configuration, and persisted Material 3 themes.
 - Typed transport, HTTP, cache, serialization, and unknown failures
 - Freezed immutable models with generated JSON serialization
 - Development and production `dart-define` files
+- English, Bangla, and Arabic localization with automatic RTL layout
+- Persisted language selection with English as the default
 - Persisted light, dark, and system theme selection
 - Material 3 colors, typography, spacing, radii, and component themes
 - Shared page and error widgets
@@ -31,6 +34,7 @@ Freezed models, environment configuration, and persisted Material 3 themes.
 | Functional results | `dartz` |
 | Models | `freezed_annotation`, `freezed`, `json_annotation`, `json_serializable` |
 | Persistence | `shared_preferences` |
+| Localization | `flutter_localizations`, `intl`, Flutter `gen-l10n` |
 | Generation | `build_runner` |
 
 ## Project structure
@@ -51,6 +55,7 @@ Freezed models, environment configuration, and persisted Material 3 themes.
 │   │   ├── di/                   # Generated application providers
 │   │   ├── error/                # Failure types
 │   │   ├── extensions/           # Shared extensions
+│   │   ├── localization/         # Supported locales, persistence, notifier
 │   │   ├── network/              # Dio, CRUD, cache, auth, error mapping
 │   │   ├── theme/                # ThemeData, tokens, persistence, notifier
 │   │   └── widgets/              # App-wide widgets
@@ -96,6 +101,55 @@ flutter run --dart-define-from-file=config/dev.json
 
 Generated `.g.dart` and `.freezed.dart` files are part of the source tree. Do
 not edit them manually.
+
+## Localization
+
+The template currently supports:
+
+| Language | Locale | Direction |
+| --- | --- | --- |
+| English | `en` | LTR |
+| Bangla | `bn` | LTR |
+| Arabic | `ar` | RTL |
+
+English is used when no language has been saved. Selecting a language in
+Settings updates the application immediately and persists the choice with
+`SharedPreferencesAsync`. The saved locale is restored before the first frame.
+Missing or invalid values fall back to English.
+
+Use localized strings in presentation and shared widgets through the
+`BuildContext` extension:
+
+```dart
+Text(context.l10n.settingsTitle)
+```
+
+Translation resources live in:
+
+```text
+lib/l10n/
+├── app_en.arb
+├── app_bn.arb
+└── app_ar.arb
+```
+
+Add a message to `app_en.arb`, provide the same key in the Bangla and Arabic
+files, then generate localization classes:
+
+```sh
+flutter gen-l10n
+```
+
+To add another language:
+
+1. Add its ARB file, such as `app_es.arb`.
+2. Add its `Locale` to `AppLocales.supported`.
+3. Add its display name to the ARB resources and Settings selector.
+4. Add the locale to `CFBundleLocalizations` in `ios/Runner/Info.plist`.
+5. Run `flutter gen-l10n`.
+
+Flutter supplies RTL directionality automatically for Arabic because the
+selected locale is passed to `MaterialApp`.
 
 ## Environment configuration
 
@@ -446,6 +500,7 @@ The template uses the platform font. To add a brand font:
 
 ```sh
 dart format .
+flutter gen-l10n
 dart run build_runner build
 flutter analyze
 flutter test

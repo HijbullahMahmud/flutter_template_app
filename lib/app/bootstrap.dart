@@ -1,6 +1,9 @@
 import 'dart:ui';
 
 import 'package:ag_pos/app/template_app.dart';
+import 'package:ag_pos/core/localization/app_locales.dart';
+import 'package:ag_pos/core/localization/locale_controller.dart';
+import 'package:ag_pos/core/localization/locale_preferences.dart';
 import 'package:ag_pos/core/theme/theme_controller.dart';
 import 'package:ag_pos/core/theme/theme_preferences.dart';
 import 'package:flutter/material.dart';
@@ -18,7 +21,9 @@ Future<void> bootstrap() async {
   };
 
   final themePreferences = SharedPreferencesThemePreferences();
+  final localePreferences = SharedPreferencesLocalePreferences();
   ThemeMode initialThemeMode;
+  Locale initialLocale;
 
   try {
     initialThemeMode = await themePreferences.loadThemeMode();
@@ -34,11 +39,27 @@ Future<void> bootstrap() async {
     );
   }
 
+  try {
+    initialLocale = await localePreferences.loadLocale();
+  } on Object catch (error, stackTrace) {
+    initialLocale = AppLocales.english;
+    FlutterError.reportError(
+      FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'locale preferences',
+        context: ErrorDescription('while loading the saved locale'),
+      ),
+    );
+  }
+
   runApp(
     ProviderScope(
       overrides: [
         themePreferencesProvider.overrideWithValue(themePreferences),
         initialThemeModeProvider.overrideWithValue(initialThemeMode),
+        localePreferencesProvider.overrideWithValue(localePreferences),
+        initialLocaleProvider.overrideWithValue(initialLocale),
       ],
       child: const TemplateApp(),
     ),

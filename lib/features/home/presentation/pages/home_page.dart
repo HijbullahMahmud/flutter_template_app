@@ -1,6 +1,6 @@
 import 'package:ag_pos/app/router/app_routes.dart';
-import 'package:ag_pos/core/config/app_config.dart';
 import 'package:ag_pos/core/constants/app_sizes.dart';
+import 'package:ag_pos/core/extensions/build_context_extensions.dart';
 import 'package:ag_pos/core/widgets/app_error_view.dart';
 import 'package:ag_pos/core/widgets/app_page.dart';
 import 'package:ag_pos/features/home/domain/entities/template_feature.dart';
@@ -18,10 +18,10 @@ class HomePage extends ConsumerWidget {
     final features = ref.watch(homeControllerProvider);
 
     return AppPage(
-      title: AppConfig.appName,
+      title: context.locale.appName,
       actions: <Widget>[
         IconButton(
-          tooltip: 'Settings',
+          tooltip: context.locale.settingsTooltip,
           onPressed: () => context.goNamed(AppRouteNames.settings),
           icon: const Icon(Icons.settings_outlined),
         ),
@@ -31,8 +31,8 @@ class HomePage extends ConsumerWidget {
         AsyncData<List<TemplateFeature>>(:final value) => _HomeContent(
           features: value,
         ),
-        AsyncError<List<TemplateFeature>>(:final error) => AppErrorView(
-          message: error.toString(),
+        AsyncError<List<TemplateFeature>>() => AppErrorView(
+          message: context.locale.homeLoadError,
           onRetry: () => ref.read(homeControllerProvider.notifier).reload(),
         ),
         _ => const Center(child: CircularProgressIndicator()),
@@ -54,13 +54,12 @@ class _HomeContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            'Ready for your features.',
+            context.locale.homeReadyTitle,
             style: Theme.of(context).textTheme.headlineLarge,
           ),
           const SizedBox(height: AppSizes.space8),
           Text(
-            'Replace this starter feature with your product modules. '
-            'The app foundation is already wired.',
+            context.locale.homeReadyDescription,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),

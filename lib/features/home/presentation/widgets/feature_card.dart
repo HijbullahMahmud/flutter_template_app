@@ -1,4 +1,5 @@
 import 'package:ag_pos/core/constants/app_sizes.dart';
+import 'package:ag_pos/core/extensions/build_context_extensions.dart';
 import 'package:ag_pos/features/home/domain/entities/template_feature.dart';
 import 'package:flutter/material.dart';
 
@@ -10,6 +11,7 @@ class FeatureCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final (title, description) = _localizedContent(context, feature.icon);
 
     return Card(
       child: Padding(
@@ -31,10 +33,10 @@ class FeatureCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSizes.space16),
-            Text(feature.title, style: Theme.of(context).textTheme.titleLarge),
+            Text(title, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: AppSizes.space8),
             Text(
-              feature.description,
+              description,
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
@@ -43,6 +45,32 @@ class FeatureCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  (String, String) _localizedContent(
+    BuildContext context,
+    TemplateFeatureIcon icon,
+  ) {
+    final l10n = context.locale;
+
+    return switch (icon) {
+      TemplateFeatureIcon.architecture => (
+        l10n.featureArchitectureTitle,
+        l10n.featureArchitectureDescription,
+      ),
+      TemplateFeatureIcon.routing => (
+        l10n.featureRoutingTitle,
+        l10n.featureRoutingDescription,
+      ),
+      TemplateFeatureIcon.dependencyInjection => (
+        l10n.featureRiverpodTitle,
+        l10n.featureRiverpodDescription,
+      ),
+      TemplateFeatureIcon.theme => (
+        l10n.featureNetworkTitle,
+        l10n.featureNetworkDescription,
+      ),
+    };
   }
 
   IconData _iconFor(TemplateFeatureIcon icon) {
