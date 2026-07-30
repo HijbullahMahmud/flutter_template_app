@@ -18,7 +18,7 @@ final class ProductsControllerProvider
     : super(
         from: null,
         argument: null,
-        retry: null,
+        retry: _disableRetry,
         name: r'productsControllerProvider',
         isAutoDispose: false,
         dependencies: null,
@@ -34,7 +34,7 @@ final class ProductsControllerProvider
 }
 
 String _$productsControllerHash() =>
-    r'c1683193a8d728b4338b1a8a440bd6474e3297d8';
+    r'f35c0312244135f33a0de9ec535106c3a169e5ea';
 
 abstract class _$ProductsController extends $AsyncNotifier<ProductsState> {
   FutureOr<ProductsState> build();

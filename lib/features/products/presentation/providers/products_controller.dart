@@ -1,13 +1,23 @@
+import 'dart:async';
+
 import 'package:ag_pos/core/di/app_providers.dart';
 import 'package:ag_pos/core/error/failure.dart';
 import 'package:ag_pos/features/products/domain/entities/product.dart';
 import 'package:ag_pos/features/products/domain/entities/product_page_result.dart';
 import 'package:ag_pos/features/products/presentation/providers/products_state.dart';
+import 'package:dartz/dartz.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'products_controller.g.dart';
 
-@Riverpod(keepAlive: true)
+final productsRequestTimeoutProvider = Provider<Duration>(
+  (Ref ref) => const Duration(seconds: 15),
+);
+
+Duration? _disableRetry(int retryCount, Object error) => null;
+
+@Riverpod(keepAlive: true, retry: _disableRetry)
 class ProductsController extends _$ProductsController {
   static const int _pageSize = 12;
 
@@ -29,10 +39,7 @@ class ProductsController extends _$ProductsController {
       current.copyWith(isLoadingMore: true, loadMoreFailure: null),
     );
 
-    final result = await ref.read(getProductsProvider)(
-      skip: current.nextSkip,
-      limit: _pageSize,
-    );
+    final result = await _getProducts(skip: current.nextSkip, limit: _pageSize);
 
     result.fold(
       (Failure failure) {
@@ -62,10 +69,7 @@ class ProductsController extends _$ProductsController {
   }
 
   Future<ProductsState> _loadFirstPage() async {
-    final result = await ref.read(getProductsProvider)(
-      skip: 0,
-      limit: _pageSize,
-    );
+    final result = await _getProducts(skip: 0, limit: _pageSize);
 
     return result.fold(
       (Failure failure) => throw ProductsFeatureException(failure),
@@ -79,6 +83,23 @@ class ProductsController extends _$ProductsController {
         );
       },
     );
+  }
+
+  Future<Either<Failure, ProductPageResult>> _getProducts({
+    required int skip,
+    required int limit,
+  }) {
+    return ref
+        .read(getProductsProvider)(skip: skip, limit: limit)
+        .timeout(
+          ref.read(productsRequestTimeoutProvider),
+          onTimeout: () => const Left<Failure, ProductPageResult>(
+            NetworkFailure(
+              type: FailureType.receiveTimeout,
+              message: 'The products request timed out. Please try again.',
+            ),
+          ),
+        );
   }
 }
 
