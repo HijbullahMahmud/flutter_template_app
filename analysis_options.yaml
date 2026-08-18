@@ -5,6 +5,12 @@ analyzer:
     - build/**
     - '**/*.g.dart'
     - '**/*.freezed.dart'
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
   errors:
     invalid_annotation_target: ignore
     invalid_use_of_visible_for_testing_member: error

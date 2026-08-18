@@ -1,4 +1,4 @@
-name: ag_pos
+name: flutter_template_app
 description: A production-ready Flutter clean architecture starter.
 publish_to: 'none'
 version: 1.0.0+1
