@@ -3,21 +3,21 @@ import 'dart:async';
 import 'package:ag_pos/core/constants/app_sizes.dart';
 import 'package:ag_pos/core/extensions/build_context_extensions.dart';
 import 'package:ag_pos/core/localization/app_locales.dart';
-import 'package:ag_pos/core/localization/locale_controller.dart';
+import 'package:ag_pos/core/localization/locale_cubit.dart';
 import 'package:ag_pos/core/responsive/app_breakpoints.dart';
 import 'package:ag_pos/core/responsive/responsive_builder.dart';
-import 'package:ag_pos/core/theme/theme_controller.dart';
+import 'package:ag_pos/core/theme/theme_cubit.dart';
 import 'package:ag_pos/core/widgets/app_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-class SettingsPage extends ConsumerWidget {
+class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final selectedThemeMode = ref.watch(themeControllerProvider);
-    final selectedLocale = ref.watch(localeControllerProvider);
+  Widget build(BuildContext context) {
+    final selectedThemeMode = context.watch<ThemeCubit>().state;
+    final selectedLocale = context.watch<LocaleCubit>().state;
     final l10n = context.locale;
 
     return AppPage(
@@ -48,11 +48,7 @@ class SettingsPage extends ConsumerWidget {
                 useCompactLayout:
                     metrics.width < AppBreakpoints.segmentedControl,
                 onChanged: (ThemeMode mode) {
-                  unawaited(
-                    ref
-                        .read(themeControllerProvider.notifier)
-                        .setThemeMode(mode),
-                  );
+                  unawaited(context.read<ThemeCubit>().setThemeMode(mode));
                 },
               ),
               SizedBox(height: metrics.sectionGap),
@@ -87,11 +83,7 @@ class SettingsPage extends ConsumerWidget {
                     .toList(growable: false),
                 onChanged: (Locale? locale) {
                   if (locale != null) {
-                    unawaited(
-                      ref
-                          .read(localeControllerProvider.notifier)
-                          .setLocale(locale),
-                    );
+                    unawaited(context.read<LocaleCubit>().setLocale(locale));
                   }
                 },
               ),

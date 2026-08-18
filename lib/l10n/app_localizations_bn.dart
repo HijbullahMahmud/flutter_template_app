@@ -39,11 +39,11 @@ class AppLocalizationsBn extends AppLocalizations {
       'কেন্দ্রীভূত, নামযুক্ত এবং ডিপ-লিংক উপযোগী নেভিগেশন।';
 
   @override
-  String get featureRiverpodTitle => 'Riverpod + DI';
+  String get featureBlocTitle => 'BLoC + DI';
 
   @override
-  String get featureRiverpodDescription =>
-      'জেনারেটেড প্রোভাইডার এবং পরীক্ষাযোগ্য স্টেট।';
+  String get featureBlocDescription =>
+      'স্পষ্ট ডিপেন্ডেন্সি এবং পরীক্ষাযোগ্য স্টেট।';
 
   @override
   String get featureNetworkTitle => 'Dio নেটওয়ার্কিং';
@@ -60,7 +60,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get productsDescription =>
-      'Dio, Dartz, Riverpod, Freezed এবং রেসপনসিভ গ্রিড ব্যবহার করে একটি বাস্তব পেজিনেটেড API উদাহরণ।';
+      'Dio, Dartz, BLoC, Freezed এবং রেসপনসিভ গ্রিড ব্যবহার করে একটি বাস্তব পেজিনেটেড API উদাহরণ।';
 
   @override
   String productsCount(int count) {

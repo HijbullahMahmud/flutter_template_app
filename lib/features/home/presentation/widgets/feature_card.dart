@@ -68,8 +68,8 @@ class FeatureCard extends StatelessWidget {
         l10n.featureRoutingDescription,
       ),
       TemplateFeatureIcon.dependencyInjection => (
-        l10n.featureRiverpodTitle,
-        l10n.featureRiverpodDescription,
+        l10n.featureBlocTitle,
+        l10n.featureBlocDescription,
       ),
       TemplateFeatureIcon.theme => (
         l10n.featureNetworkTitle,

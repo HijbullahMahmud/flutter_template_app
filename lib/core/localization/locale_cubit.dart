@@ -1,22 +1,13 @@
 import 'package:ag_pos/core/localization/app_locales.dart';
 import 'package:ag_pos/core/localization/locale_preferences.dart';
 import 'package:flutter/material.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-part 'locale_controller.g.dart';
+class LocaleCubit extends Cubit<Locale> {
+  LocaleCubit({required this.preferences, Locale? initialLocale})
+    : super(initialLocale ?? AppLocales.english);
 
-@Riverpod(keepAlive: true)
-Locale initialLocale(Ref ref) => AppLocales.english;
-
-@Riverpod(keepAlive: true)
-LocalePreferences localePreferences(Ref ref) {
-  return SharedPreferencesLocalePreferences();
-}
-
-@Riverpod(keepAlive: true)
-class LocaleController extends _$LocaleController {
-  @override
-  Locale build() => ref.watch(initialLocaleProvider);
+  final LocalePreferences preferences;
 
   Future<void> setLocale(Locale locale) async {
     if (!AppLocales.isSupported(locale) ||
@@ -24,10 +15,10 @@ class LocaleController extends _$LocaleController {
       return;
     }
 
-    state = locale;
+    emit(locale);
 
     try {
-      await ref.read(localePreferencesProvider).saveLocale(locale);
+      await preferences.saveLocale(locale);
     } on Object catch (error, stackTrace) {
       FlutterError.reportError(
         FlutterErrorDetails(

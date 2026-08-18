@@ -6,7 +6,7 @@ typedef LoadNextPage = Future<void> Function();
 
 /// A lazy responsive grid that requests another page near the scroll boundary.
 ///
-/// This widget owns presentation concerns only. A feature's Riverpod controller
+/// This widget owns presentation concerns only. A feature's BLoC
 /// remains responsible for API requests, page numbers, deduplication, failures,
 /// and updating [itemCount], [hasMore], and [isLoadingMore].
 class PaginatedResponsiveGridView extends StatefulWidget {

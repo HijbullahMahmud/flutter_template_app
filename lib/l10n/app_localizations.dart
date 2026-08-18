@@ -154,17 +154,17 @@ abstract class AppLocalizations {
   /// **'Centralized, named, and deep-link-ready navigation.'**
   String get featureRoutingDescription;
 
-  /// No description provided for @featureRiverpodTitle.
+  /// No description provided for @featureBlocTitle.
   ///
   /// In en, this message translates to:
-  /// **'Riverpod + DI'**
-  String get featureRiverpodTitle;
+  /// **'BLoC + DI'**
+  String get featureBlocTitle;
 
-  /// No description provided for @featureRiverpodDescription.
+  /// No description provided for @featureBlocDescription.
   ///
   /// In en, this message translates to:
-  /// **'Generated providers and testable state.'**
-  String get featureRiverpodDescription;
+  /// **'Explicit dependencies and testable state.'**
+  String get featureBlocDescription;
 
   /// No description provided for @featureNetworkTitle.
   ///
@@ -193,7 +193,7 @@ abstract class AppLocalizations {
   /// No description provided for @productsDescription.
   ///
   /// In en, this message translates to:
-  /// **'A real paginated API example using Dio, Dartz, Riverpod, Freezed, and the responsive grid.'**
+  /// **'A real paginated API example using Dio, Dartz, BLoC, Freezed, and the responsive grid.'**
   String get productsDescription;
 
   /// No description provided for @productsCount.

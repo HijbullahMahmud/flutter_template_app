@@ -1,14 +1,14 @@
 # Flutter Clean Architecture Starter
 
 A ready-to-extend Flutter template with feature-first clean architecture,
-generated Riverpod state and dependency injection, GoRouter, Dio networking,
+BLoC state management with constructor injection, GoRouter, Dio networking,
 Freezed models, generated localization, environment configuration, and
 persisted Material 3 themes.
 
 ## Included
 
 - Feature-first `data`, `domain`, and `presentation` layers
-- Generated Riverpod providers and async notifiers
+- Route-scoped BLoCs, app-wide Cubits, and explicit dependency injection
 - Named GoRouter routes, nested navigation, and a 404 page
 - Dio GET, POST, PUT, PATCH, and DELETE support
 - Dio cache interceptor with configurable request policies
@@ -31,7 +31,7 @@ persisted Material 3 themes.
 
 | Area | Packages |
 | --- | --- |
-| State and DI | `flutter_riverpod`, `riverpod_annotation`, `riverpod_generator` |
+| State and DI | `flutter_bloc` and constructor injection |
 | Navigation | `go_router` |
 | Networking | `dio`, `dio_cache_interceptor` |
 | Functional results | `dartz` |
@@ -56,13 +56,13 @@ persisted Material 3 themes.
 │   ├── core/
 │   │   ├── config/               # Compile-time environment values
 │   │   ├── constants/            # Shared spacing and layout tokens
-│   │   ├── di/                   # Generated application providers
+│   │   ├── di/                   # Application dependency composition
 │   │   ├── error/                # Failure types
 │   │   ├── extensions/           # Shared extensions
-│   │   ├── localization/         # Supported locales, persistence, notifier
+│   │   ├── localization/         # Supported locales, persistence, Cubit
 │   │   ├── network/              # Dio, CRUD, cache, auth, error mapping
 │   │   ├── responsive/           # Breakpoints, metrics, values, layout widgets
-│   │   ├── theme/                # ThemeData, tokens, persistence, notifier
+│   │   ├── theme/                # ThemeData, tokens, persistence, Cubit
 │   │   └── widgets/              # App-wide widgets
 │   ├── l10n/                     # ARB resources and generated localizations
 │   ├── features/
@@ -78,7 +78,7 @@ persisted Material 3 themes.
 │   │       │   └── usecases/
 │   │       └── presentation/
 │   │           ├── pages/
-│   │           ├── providers/
+│   │           ├── bloc/        # Feature BLoCs and immutable state
 │   │           └── widgets/
 │   └── main.dart
 └── test/
@@ -93,7 +93,7 @@ presentation → domain ← data
 - `domain` contains business entities, repository contracts, and use cases.
 - `data` contains Freezed models, data sources, mapping, and repository
   implementations.
-- `presentation` contains generated Riverpod notifiers, pages, and widgets.
+- `presentation` contains BLoCs, immutable states, pages, and widgets.
 - `core` contains infrastructure shared by multiple features.
 
 Keep feature-specific code out of `core`.
@@ -319,7 +319,7 @@ The widget handles presentation-level pagination behavior:
 - Loading, pagination-error, empty, and end-of-list presentation
 - Paused automatic retry while `loadMoreError` is present
 
-The feature's Riverpod controller remains responsible for:
+The feature's BLoC remains responsible for:
 
 - Fetching the first page
 - Calling its repository or use case
@@ -347,74 +347,37 @@ abstract class ProductListState with _$ProductListState {
 The page passes that state to the grid:
 
 ```dart
-class ProductPage extends ConsumerWidget {
+class ProductPage extends StatelessWidget {
   const ProductPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final products = ref.watch(productsControllerProvider);
-
-    return AppPage(
-      title: context.locale.productsTitle,
-      body: products.when(
-        loading: () => AppLoadingView(
-          semanticLabel: context.locale.loadingLabel,
-        ),
-        error: (error, stackTrace) => AppErrorView(
-          message: context.locale.productsLoadError,
-          onRetry: () => ref.invalidate(productsControllerProvider),
-        ),
-        data: (state) {
-          return ResponsiveBuilder(
-            builder: (context, metrics) {
-              return PaginatedResponsiveGridView(
-                itemCount: state.items.length,
-                itemBuilder: (context, index) {
-                  final product = state.items[index];
-                  return ProductCard(
-                    key: ValueKey(product.id),
-                    product: product,
-                  );
-                },
-                hasMore: state.hasMore,
-                isLoadingMore: state.isLoadingMore,
-                onLoadMore: () {
-                  return ref
-                      .read(productsControllerProvider.notifier)
-                      .loadNextPage();
-                },
-                minimumItemWidth: productCardMinimumWidth.resolve(
-                  metrics.windowSize,
-                ),
-                maximumColumns: 3,
-                spacing: metrics.gridGap,
-                padding: EdgeInsets.symmetric(
-                  horizontal: metrics.horizontalPadding,
-                  vertical: metrics.verticalPadding,
-                ),
-                emptyState: Center(
-                  child: Text(context.locale.productsEmpty),
-                ),
-                loadMoreError: state.loadMoreFailure == null
-                    ? null
-                    : Padding(
-                        padding: const EdgeInsets.all(AppSizes.space16),
-                        child: Center(
-                          child: FilledButton.tonal(
-                            onPressed: () {
-                              ref
-                                  .read(
-                                    productsControllerProvider.notifier,
-                                  )
-                                  .loadNextPage();
-                            },
-                            child: Text(context.locale.tryAgain),
-                          ),
-                        ),
-                      ),
-              );
+  Widget build(BuildContext context) {
+    return BlocBuilder<ProductsBloc, ProductsViewState>(
+      builder: (context, viewState) => AppPage(
+        title: context.locale.productsTitle,
+        body: switch (viewState) {
+          ProductsLoading() => AppLoadingView(
+            semanticLabel: context.locale.loadingLabel,
+          ),
+          ProductsLoadFailure() => AppErrorView(
+            message: context.locale.productsLoadError,
+            onRetry: () => context
+                .read<ProductsBloc>()
+                .add(const ProductsReloaded()),
+          ),
+          ProductsLoadSuccess(:final products) => PaginatedResponsiveGridView(
+            itemCount: products.items.length,
+            itemBuilder: (context, index) => ProductCard(
+              product: products.items[index],
+            ),
+            hasMore: products.hasMore,
+            isLoadingMore: products.isLoadingMore,
+            onLoadMore: () async {
+              context
+                  .read<ProductsBloc>()
+                  .add(const ProductsNextPageRequested());
             },
-          );
+          ),
         },
       ),
     );
@@ -422,12 +385,13 @@ class ProductPage extends ConsumerWidget {
 }
 ```
 
-The first page should use the controller's top-level `AsyncLoading` and
-`AsyncError` states. After data is visible, keep the existing items on screen
+The first page should use the BLoC's top-level loading and failure states.
+After data is visible, keep the existing items on screen
 while `isLoadingMore` is true. Store a later-page failure in
 `loadMoreFailure`; do not replace the whole screen with an error page.
 
-`onLoadMore` must return the controller's `Future<void>`. The grid guards that
+`onLoadMore` should dispatch the next-page event and complete when that request
+finishes. The grid guards that
 future so repeated scroll notifications cannot start duplicate requests.
 
 ### Compose a custom sliver screen
@@ -505,7 +469,7 @@ class _ProductPageState extends State<ProductPage> {
 
     final position = _scrollController.position;
     if (position.extentAfter < 400) {
-      // Call the Riverpod controller. The controller must guard against
+      // Dispatch the BLoC event. The BLoC must guard against
       // duplicate requests and stop when hasMore is false.
     }
   }
@@ -1001,7 +965,7 @@ Localization infrastructure is split by responsibility:
 
 - `app_locales.dart`: supported locales and English fallback.
 - `locale_preferences.dart`: `SharedPreferencesAsync` persistence.
-- `locale_controller.dart`: generated Riverpod state and save behavior.
+- `locale_cubit.dart`: locale Cubit state and save behavior.
 - `build_context_extensions.dart`: the `context.locale` presentation helper.
 - `bootstrap.dart`: restores the saved locale before `runApp`.
 - `template_app.dart`: delegates, supported locales, and current locale.
@@ -1009,9 +973,7 @@ Localization infrastructure is split by responsibility:
 Change the language from presentation code:
 
 ```dart
-await ref
-    .read(localeControllerProvider.notifier)
-    .setLocale(AppLocales.bangla);
+await context.read<LocaleCubit>().setLocale(AppLocales.bangla);
 ```
 
 Only locales in `AppLocales.supported` are accepted. Selecting the active locale
@@ -1052,7 +1014,7 @@ no account or authentication and supports pagination through `limit` and
 ### Products responsive preview
 
 The Products feature uses two columns on a regular phone and three columns on a
-tablet while sharing the same page, controller, and pagination implementation:
+tablet while sharing the same page, BLoC, and pagination implementation:
 
 | Phone — 2 columns | Tablet — 3 columns |
 | --- | --- |
@@ -1066,7 +1028,7 @@ The example demonstrates:
 - Freezed API models and paginated presentation state
 - Data-model-to-domain-entity mapping
 - Repository and use-case boundaries
-- Generated Riverpod dependency injection and async controller
+- Constructor-injected dependencies and an event-driven products BLoC
 - First-page loading/error and later-page loading/error separation
 - Item deduplication while appending pages
 - Pull-to-refresh
@@ -1082,7 +1044,7 @@ GET /products?limit=12&skip=0&select=id,title,description,category,price,rating,
 
 Use this feature as the reference when adding a real API-backed module. Replace
 the sample base URL and response models while keeping the domain, repository,
-controller, and presentation boundaries.
+BLoC, and presentation boundaries.
 
 Products coverage includes response decoding, request parameters, first and
 later pages, later-page failure preservation, responsive pagination, and route
@@ -1175,15 +1137,12 @@ class UserRemoteDataSource {
 }
 ```
 
-Register the data source with a generated provider:
+Register the data source through explicit dependency composition:
 
 ```dart
-part 'user_providers.g.dart';
-
-@riverpod
-UserRemoteDataSource userRemoteDataSource(Ref ref) {
-  return UserRemoteDataSource(ref.watch(networkServiceProvider));
-}
+final userRemoteDataSource = UserRemoteDataSource(networkService);
+final userRepository = UserRepositoryImpl(userRemoteDataSource);
+final getUsers = GetUsers(userRepository);
 ```
 
 ### CRUD API
@@ -1262,8 +1221,8 @@ The default store is a bounded in-memory LRU cache:
 - Cached fallback for HTTP 500, 502, 503, and 504
 - POST caching disabled; other mutations are not cached
 
-Override `cacheOptionsProvider` if the product requires a persistent or
-encrypted cache.
+Supply different `CacheOptions` while composing `AppDependencies` if the
+product requires a persistent or encrypted cache.
 
 ### Authentication
 
@@ -1273,9 +1232,10 @@ encrypted cache.
 Authorization: Bearer <token>
 ```
 
-The template uses `EmptyAccessTokenProvider`, so unauthenticated requests work
-without additional setup. When authentication is implemented, provide a secure
-storage-backed implementation by overriding `authTokenSourceProvider`.
+The template passes `EmptyAccessTokenProvider` to `AppDependencies.create`, so
+unauthenticated requests work without additional setup. For authenticated apps,
+pass a secure storage-backed implementation through its `tokenProvider`
+argument.
 
 Do not store access or refresh tokens in `SharedPreferences`.
 
@@ -1343,39 +1303,42 @@ abstract class UserModel with _$UserModel {
 
 After adding or changing a model, regenerate its implementation.
 
-## Riverpod annotations
+## BLoC conventions
 
-Use `@riverpod` or `@Riverpod(keepAlive: true)` for every provider and notifier.
-Do not manually construct `Provider`, `NotifierProvider`, or
-`AsyncNotifierProvider`.
+Use events for user or lifecycle inputs and immutable states for renderable
+outputs. Construct feature BLoCs at their route boundary and inject use cases
+through their constructors.
 
-Function provider:
+Dependency composition:
 
 ```dart
-@riverpod
-UserRepository userRepository(Ref ref) {
-  return UserRepositoryImpl(ref.watch(userRemoteDataSourceProvider));
-}
+final userRemoteDataSource = UserRemoteDataSource(networkService);
+final userRepository = UserRepositoryImpl(userRemoteDataSource);
+final getUsers = GetUsers(userRepository);
 ```
 
-Async notifier:
+Feature BLoC:
 
 ```dart
-@riverpod
-class UsersController extends _$UsersController {
-  @override
-  Future<List<User>> build() async {
-    final result = await ref.watch(getUsersProvider)();
-    return result.fold(
-      (failure) => throw StateError(failure.message),
-      (users) => users,
-    );
+class UsersBloc extends Bloc<UsersEvent, UsersState> {
+  UsersBloc(this._getUsers) : super(const UsersLoading()) {
+    on<UsersRequested>((event, emit) async {
+      emit(const UsersLoading());
+      final result = await _getUsers();
+      result.fold(
+        (failure) => emit(UsersLoadFailure(failure)),
+        (users) => emit(UsersLoadSuccess(users)),
+      );
+    });
   }
+
+  final GetUsers _getUsers;
 }
 ```
 
-Providers are auto-disposed by default. Use `keepAlive: true` only for
-application-level dependencies that should live for the entire provider scope.
+`BlocProvider` closes BLoCs it creates. Keep theme and locale Cubits above the
+router, and create feature BLoCs inside route builders so their lifetimes match
+their pages.
 
 ## Code generation
 
@@ -1418,7 +1381,7 @@ system mode.
 - Typography: `lib/core/theme/app_typography.dart`
 - Component themes: `lib/core/theme/app_theme.dart`
 - Persistence: `lib/core/theme/theme_preferences.dart`
-- Riverpod state: `lib/core/theme/theme_controller.dart`
+- Cubit state: `lib/core/theme/theme_cubit.dart`
 
 The template uses the platform font. To add a brand font:
 
@@ -1434,7 +1397,7 @@ The template uses the platform font. To add a brand font:
 4. Implement remote/local data sources using shared infrastructure.
 5. Implement the repository and return `Either<Failure, T>`.
 6. Add use cases.
-7. Add annotated Riverpod providers/notifiers.
+7. Add constructor-injected BLoCs, events, and immutable states.
 8. Register routes.
 9. Run code generation.
 10. Add unit and widget tests.

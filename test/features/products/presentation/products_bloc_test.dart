@@ -1,35 +1,28 @@
 import 'dart:async';
 
-import 'package:ag_pos/core/di/app_providers.dart';
 import 'package:ag_pos/core/error/failure.dart';
 import 'package:ag_pos/features/products/domain/entities/product.dart';
 import 'package:ag_pos/features/products/domain/entities/product_page_result.dart';
 import 'package:ag_pos/features/products/domain/repositories/products_repository.dart';
 import 'package:ag_pos/features/products/domain/usecases/get_products.dart';
-import 'package:ag_pos/features/products/presentation/providers/products_controller.dart';
-import 'package:ag_pos/features/products/presentation/providers/products_state.dart';
+import 'package:ag_pos/features/products/presentation/bloc/products_bloc.dart';
+import 'package:ag_pos/features/products/presentation/bloc/products_state.dart';
 import 'package:dartz/dartz.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('loads the first page and appends the next page', () async {
     final repository = _PagingProductsRepository();
-    final container = ProviderContainer(
-      overrides: [
-        getProductsProvider.overrideWithValue(GetProducts(repository)),
-      ],
-    );
-    addTearDown(container.dispose);
+    final bloc = ProductsBloc(GetProducts(repository));
+    addTearDown(bloc.close);
 
-    final firstState = await container.read(productsControllerProvider.future);
+    final firstState = await _requestProducts(bloc);
 
     expect(firstState.items.map((Product item) => item.id), <int>[1, 2]);
     expect(firstState.nextSkip, 2);
     expect(firstState.hasMore, isTrue);
 
-    await container.read(productsControllerProvider.notifier).loadNextPage();
-    final secondState = container.read(productsControllerProvider).requireValue;
+    final secondState = await _requestNextPage(bloc);
 
     expect(secondState.items.map((Product item) => item.id), <int>[1, 2, 3, 4]);
     expect(secondState.hasMore, isFalse);
@@ -39,16 +32,11 @@ void main() {
 
   test('keeps existing products when loading another page fails', () async {
     final repository = _FailingNextPageRepository();
-    final container = ProviderContainer(
-      overrides: [
-        getProductsProvider.overrideWithValue(GetProducts(repository)),
-      ],
-    );
-    addTearDown(container.dispose);
+    final bloc = ProductsBloc(GetProducts(repository));
+    addTearDown(bloc.close);
 
-    await container.read(productsControllerProvider.future);
-    await container.read(productsControllerProvider.notifier).loadNextPage();
-    final state = container.read(productsControllerProvider).requireValue;
+    await _requestProducts(bloc);
+    final state = await _requestNextPage(bloc);
 
     expect(state.items, hasLength(2));
     expect(state.loadMoreFailure, isA<NetworkFailure>());
@@ -57,41 +45,54 @@ void main() {
 
   test('initial loading becomes an error when the request stalls', () async {
     final repository = _StalledProductsRepository();
-    final container = ProviderContainer(
-      overrides: [
-        getProductsProvider.overrideWithValue(GetProducts(repository)),
-        productsRequestTimeoutProvider.overrideWithValue(Duration.zero),
-      ],
+    final bloc = ProductsBloc(
+      GetProducts(repository),
+      requestTimeout: Duration.zero,
     );
-    addTearDown(container.dispose);
+    addTearDown(bloc.close);
 
-    await expectLater(
-      container.read(productsControllerProvider.future),
-      throwsA(isA<ProductsFeatureException>()),
+    final stateFuture = bloc.stream.firstWhere(
+      (ProductsViewState state) => state is ProductsLoadFailure,
     );
+    bloc.add(const ProductsRequested());
+    final state = await stateFuture;
 
-    final state = container.read(productsControllerProvider);
-    expect(state, isA<AsyncError<ProductsState>>());
+    expect(state, isA<ProductsLoadFailure>());
   });
 
   test('loading another page stops when the request stalls', () async {
     final repository = _StalledNextPageRepository();
-    final container = ProviderContainer(
-      overrides: [
-        getProductsProvider.overrideWithValue(GetProducts(repository)),
-        productsRequestTimeoutProvider.overrideWithValue(Duration.zero),
-      ],
+    final bloc = ProductsBloc(
+      GetProducts(repository),
+      requestTimeout: Duration.zero,
     );
-    addTearDown(container.dispose);
+    addTearDown(bloc.close);
 
-    await container.read(productsControllerProvider.future);
-    await container.read(productsControllerProvider.notifier).loadNextPage();
+    await _requestProducts(bloc);
+    final state = await _requestNextPage(bloc);
 
-    final state = container.read(productsControllerProvider).requireValue;
     expect(state.items, hasLength(2));
     expect(state.loadMoreFailure?.type, FailureType.receiveTimeout);
     expect(state.isLoadingMore, isFalse);
   });
+}
+
+Future<ProductsState> _requestProducts(ProductsBloc bloc) async {
+  final stateFuture = bloc.stream.firstWhere(
+    (ProductsViewState state) => state is ProductsLoadSuccess,
+  );
+  bloc.add(const ProductsRequested());
+  final state = await stateFuture as ProductsLoadSuccess;
+  return state.products;
+}
+
+Future<ProductsState> _requestNextPage(ProductsBloc bloc) async {
+  final stateFuture = bloc.stream.firstWhere((ProductsViewState state) {
+    return state is ProductsLoadSuccess && !state.products.isLoadingMore;
+  });
+  bloc.add(const ProductsNextPageRequested());
+  final state = await stateFuture as ProductsLoadSuccess;
+  return state.products;
 }
 
 class _PagingProductsRepository implements ProductsRepository {

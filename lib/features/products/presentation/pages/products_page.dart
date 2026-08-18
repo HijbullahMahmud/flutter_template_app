@@ -8,11 +8,11 @@ import 'package:ag_pos/core/responsive/responsive_value.dart';
 import 'package:ag_pos/core/widgets/app_error_view.dart';
 import 'package:ag_pos/core/widgets/app_loading_indicator.dart';
 import 'package:ag_pos/core/widgets/app_page.dart';
-import 'package:ag_pos/features/products/presentation/providers/products_controller.dart';
-import 'package:ag_pos/features/products/presentation/providers/products_state.dart';
+import 'package:ag_pos/features/products/presentation/bloc/products_bloc.dart';
+import 'package:ag_pos/features/products/presentation/bloc/products_state.dart';
 import 'package:ag_pos/features/products/presentation/widgets/product_card.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 const _productCardMinimumWidth = ResponsiveValue<double>(
   smallPhone: AppSizes.cardMinWidth,
@@ -21,37 +21,57 @@ const _productCardMinimumWidth = ResponsiveValue<double>(
   expanded: 148,
 );
 
-class ProductsPage extends ConsumerWidget {
+class ProductsPage extends StatelessWidget {
   const ProductsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final products = ref.watch(productsControllerProvider);
-
-    return AppPage(
-      title: context.locale.productsTitle,
-      body: switch (products) {
-        AsyncData<ProductsState>(:final value) => _ProductsContent(
-          state: value,
-          onLoadMore: () =>
-              ref.read(productsControllerProvider.notifier).loadNextPage(),
-          onRefresh: () =>
-              ref.read(productsControllerProvider.notifier).reload(),
-          onRetryLoadMore: () {
-            unawaited(
-              ref.read(productsControllerProvider.notifier).loadNextPage(),
-            );
+  Widget build(BuildContext context) {
+    return BlocBuilder<ProductsBloc, ProductsViewState>(
+      builder: (BuildContext context, ProductsViewState state) {
+        return AppPage(
+          title: context.locale.productsTitle,
+          body: switch (state) {
+            ProductsLoadSuccess(:final products) => _ProductsContent(
+              state: products,
+              onLoadMore: () => _loadNextPage(context),
+              onRefresh: () => _reload(context),
+              onRetryLoadMore: () {
+                unawaited(_loadNextPage(context));
+              },
+            ),
+            ProductsLoadFailure() => AppErrorView(
+              message: context.locale.productsLoadError,
+              onRetry: () {
+                unawaited(_reload(context));
+              },
+            ),
+            ProductsLoading() => AppLoadingView(
+              semanticLabel: context.locale.loadingLabel,
+            ),
           },
-        ),
-        AsyncError<ProductsState>() => AppErrorView(
-          message: context.locale.productsLoadError,
-          onRetry: () {
-            unawaited(ref.read(productsControllerProvider.notifier).reload());
-          },
-        ),
-        _ => AppLoadingView(semanticLabel: context.locale.loadingLabel),
+        );
       },
     );
+  }
+
+  Future<void> _loadNextPage(BuildContext context) {
+    final bloc = context.read<ProductsBloc>();
+    bloc.add(const ProductsNextPageRequested());
+    return bloc.stream.firstWhere(_isIdle).then((_) {});
+  }
+
+  Future<void> _reload(BuildContext context) {
+    final bloc = context.read<ProductsBloc>();
+    bloc.add(const ProductsReloaded());
+    return bloc.stream.firstWhere(_isIdle).then((_) {});
+  }
+
+  bool _isIdle(ProductsViewState state) {
+    return switch (state) {
+      ProductsLoadSuccess(:final products) => !products.isLoadingMore,
+      ProductsLoadFailure() => true,
+      ProductsLoading() => false,
+    };
   }
 }
 

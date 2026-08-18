@@ -39,11 +39,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Centralized, named, and deep-link-ready navigation.';
 
   @override
-  String get featureRiverpodTitle => 'Riverpod + DI';
+  String get featureBlocTitle => 'BLoC + DI';
 
   @override
-  String get featureRiverpodDescription =>
-      'Generated providers and testable state.';
+  String get featureBlocDescription =>
+      'Explicit dependencies and testable state.';
 
   @override
   String get featureNetworkTitle => 'Dio networking';
@@ -60,7 +60,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get productsDescription =>
-      'A real paginated API example using Dio, Dartz, Riverpod, Freezed, and the responsive grid.';
+      'A real paginated API example using Dio, Dartz, BLoC, Freezed, and the responsive grid.';
 
   @override
   String productsCount(int count) {

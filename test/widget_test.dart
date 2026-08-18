@@ -1,12 +1,15 @@
+import 'package:ag_pos/app/router/app_router.dart';
 import 'package:ag_pos/app/router/app_routes.dart';
 import 'package:ag_pos/app/template_app.dart';
-import 'package:ag_pos/core/di/app_providers.dart';
 import 'package:ag_pos/core/error/failure.dart';
 import 'package:ag_pos/core/localization/app_locales.dart';
-import 'package:ag_pos/core/localization/locale_controller.dart';
+import 'package:ag_pos/core/localization/locale_cubit.dart';
 import 'package:ag_pos/core/localization/locale_preferences.dart';
-import 'package:ag_pos/core/theme/theme_controller.dart';
+import 'package:ag_pos/core/theme/theme_cubit.dart';
 import 'package:ag_pos/core/theme/theme_preferences.dart';
+import 'package:ag_pos/features/home/data/datasources/home_local_data_source.dart';
+import 'package:ag_pos/features/home/data/repositories/home_repository_impl.dart';
+import 'package:ag_pos/features/home/domain/usecases/get_template_features.dart';
 import 'package:ag_pos/features/home/presentation/widgets/feature_card.dart';
 import 'package:ag_pos/features/products/domain/entities/product.dart';
 import 'package:ag_pos/features/products/domain/entities/product_page_result.dart';
@@ -15,8 +18,9 @@ import 'package:ag_pos/features/products/domain/usecases/get_products.dart';
 import 'package:ag_pos/features/products/presentation/widgets/product_card.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 void main() {
   testWidgets('renders the starter home page', (WidgetTester tester) async {
@@ -26,7 +30,7 @@ void main() {
     expect(find.text('Ready for your features.'), findsOneWidget);
     expect(find.text('Clean architecture'), findsOneWidget);
     expect(find.text('GoRouter'), findsOneWidget);
-    expect(find.text('Riverpod + DI'), findsOneWidget);
+    expect(find.text('BLoC + DI'), findsOneWidget);
   });
 
   testWidgets('navigates to settings and changes theme', (
@@ -36,17 +40,16 @@ void main() {
     await tester.pumpAndSettle();
 
     final appContext = tester.element(find.byType(MaterialApp));
-    final container = ProviderScope.containerOf(appContext);
-    expect(container.read(themeControllerProvider), ThemeMode.system);
+    expect(appContext.read<ThemeCubit>().state, ThemeMode.system);
 
-    container.read(routerProvider).goNamed(AppRouteNames.settings);
+    _router(tester).goNamed(AppRouteNames.settings);
     await tester.pumpAndSettle();
     expect(find.text('Appearance'), findsOneWidget);
 
     await tester.tap(find.text('Dark'));
     await tester.pumpAndSettle();
 
-    expect(container.read(themeControllerProvider), ThemeMode.dark);
+    expect(appContext.read<ThemeCubit>().state, ThemeMode.dark);
   });
 
   testWidgets('navigates from home to the paginated products feature', (
@@ -79,9 +82,7 @@ void main() {
       await tester.pumpWidget(_buildApp());
       await tester.pumpAndSettle();
 
-      final appContext = tester.element(find.byType(MaterialApp));
-      final container = ProviderScope.containerOf(appContext);
-      container.read(routerProvider).goNamed(AppRouteNames.products);
+      _router(tester).goNamed(AppRouteNames.products);
       await tester.pumpAndSettle();
 
       final cards = find.byType(ProductCard);
@@ -107,10 +108,9 @@ void main() {
     await tester.pumpAndSettle();
 
     final appContext = tester.element(find.byType(MaterialApp));
-    final container = ProviderScope.containerOf(appContext);
-    expect(container.read(localeControllerProvider), AppLocales.english);
+    expect(appContext.read<LocaleCubit>().state, AppLocales.english);
 
-    container.read(routerProvider).goNamed(AppRouteNames.settings);
+    _router(tester).goNamed(AppRouteNames.settings);
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('English'));
@@ -118,13 +118,11 @@ void main() {
     await tester.tap(find.text('Bangla').last);
     await tester.pumpAndSettle();
 
-    expect(container.read(localeControllerProvider), AppLocales.bangla);
+    expect(appContext.read<LocaleCubit>().state, AppLocales.bangla);
     expect(localePreferences.savedLocale, AppLocales.bangla);
     expect(find.text('সেটিংস'), findsOneWidget);
 
-    await container
-        .read(localeControllerProvider.notifier)
-        .setLocale(AppLocales.arabic);
+    await appContext.read<LocaleCubit>().setLocale(AppLocales.arabic);
     await tester.pumpAndSettle();
 
     expect(find.text('الإعدادات'), findsOneWidget);
@@ -159,9 +157,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final appContext = tester.element(find.byType(MaterialApp));
-    final container = ProviderScope.containerOf(appContext);
-    container.read(routerProvider).goNamed(AppRouteNames.settings);
+    _router(tester).goNamed(AppRouteNames.settings);
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('theme-mode-vertical')), findsOneWidget);
@@ -218,22 +214,42 @@ void _configureView(
   });
 }
 
+GoRouter _router(WidgetTester tester) {
+  final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
+  return app.routerConfig! as GoRouter;
+}
+
 Widget _buildApp({
   LocalePreferences? localePreferences,
   Locale initialLocale = AppLocales.english,
 }) {
-  return ProviderScope(
-    overrides: [
-      themePreferencesProvider.overrideWithValue(_FakeThemePreferences()),
-      initialLocaleProvider.overrideWithValue(initialLocale),
-      getProductsProvider.overrideWithValue(
-        GetProducts(_FakeProductsRepository()),
-      ),
-      localePreferencesProvider.overrideWithValue(
-        localePreferences ?? _FakeLocalePreferences(),
+  final router = AppRouter.create();
+  addTearDown(router.dispose);
+  final getTemplateFeatures = GetTemplateFeatures(
+    HomeRepositoryImpl(const HomeLocalDataSourceImpl()),
+  );
+
+  return MultiRepositoryProvider(
+    providers: <RepositoryProvider<dynamic>>[
+      RepositoryProvider<GetTemplateFeatures>.value(value: getTemplateFeatures),
+      RepositoryProvider<GetProducts>.value(
+        value: GetProducts(_FakeProductsRepository()),
       ),
     ],
-    child: const TemplateApp(),
+    child: MultiBlocProvider(
+      providers: <BlocProvider<dynamic>>[
+        BlocProvider<ThemeCubit>(
+          create: (_) => ThemeCubit(preferences: _FakeThemePreferences()),
+        ),
+        BlocProvider<LocaleCubit>(
+          create: (_) => LocaleCubit(
+            preferences: localePreferences ?? _FakeLocalePreferences(),
+            initialLocale: initialLocale,
+          ),
+        ),
+      ],
+      child: TemplateApp(router: router),
+    ),
   );
 }
 

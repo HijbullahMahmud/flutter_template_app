@@ -39,10 +39,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'تنقل مركزي ومسمى وجاهز للروابط العميقة.';
 
   @override
-  String get featureRiverpodTitle => 'Riverpod + DI';
+  String get featureBlocTitle => 'BLoC + DI';
 
   @override
-  String get featureRiverpodDescription => 'مزودات مولدة وحالة قابلة للاختبار.';
+  String get featureBlocDescription => 'تبعيات صريحة وحالة قابلة للاختبار.';
 
   @override
   String get featureNetworkTitle => 'شبكات Dio';
@@ -59,7 +59,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get productsDescription =>
-      'مثال حقيقي لواجهة API مقسمة إلى صفحات باستخدام Dio وDartz وRiverpod وFreezed والشبكة المتجاوبة.';
+      'مثال حقيقي لواجهة API مقسمة إلى صفحات باستخدام Dio وDartz وBLoC وFreezed والشبكة المتجاوبة.';
 
   @override
   String productsCount(int count) {

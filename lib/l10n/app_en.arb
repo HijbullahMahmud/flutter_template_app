@@ -12,13 +12,13 @@
   "featureArchitectureDescription": "Feature-first data, domain, and presentation layers.",
   "featureRoutingTitle": "GoRouter",
   "featureRoutingDescription": "Centralized, named, and deep-link-ready navigation.",
-  "featureRiverpodTitle": "Riverpod + DI",
-  "featureRiverpodDescription": "Generated providers and testable state.",
+  "featureBlocTitle": "BLoC + DI",
+  "featureBlocDescription": "Explicit dependencies and testable state.",
   "featureNetworkTitle": "Dio networking",
   "featureNetworkDescription": "Typed CRUD, caching, and centralized error handling.",
   "productsBrowseAction": "Browse sample products",
   "productsTitle": "Products",
-  "productsDescription": "A real paginated API example using Dio, Dartz, Riverpod, Freezed, and the responsive grid.",
+  "productsDescription": "A real paginated API example using Dio, Dartz, BLoC, Freezed, and the responsive grid.",
   "productsCount": "Showing {count} products",
   "@productsCount": {
     "placeholders": {
