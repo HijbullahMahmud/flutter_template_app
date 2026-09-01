@@ -2,8 +2,7 @@
 
 A ready-to-extend Flutter template with feature-first clean architecture,
 BLoC state management with constructor injection, GoRouter, Dio networking,
-Freezed models, generated localization, environment configuration, and
-persisted Material 3 themes.
+Freezed models, generated localization, and persisted Material 3 themes.
 
 ## Included
 
@@ -16,7 +15,6 @@ persisted Material 3 themes.
 - Dartz `Either<Failure, T>` results
 - Typed transport, HTTP, cache, serialization, and unknown failures
 - Freezed immutable models with generated JSON serialization
-- Development and production `dart-define` files
 - English, Bangla, and Arabic localization with automatic RTL layout
 - Persisted language selection with English as the default
 - Persisted light, dark, and system theme selection
@@ -44,9 +42,6 @@ persisted Material 3 themes.
 
 ```text
 .
-├── config/
-│   ├── dev.json
-│   └── prod.json
 ├── l10n.yaml                     # Flutter gen-l10n configuration
 ├── lib/
 │   ├── app/
@@ -54,7 +49,7 @@ persisted Material 3 themes.
 │   │   ├── router/
 │   │   └── template_app.dart
 │   ├── core/
-│   │   ├── config/               # Compile-time environment values
+│   │   ├── config/               # App-wide constants
 │   │   ├── constants/            # Shared spacing and layout tokens
 │   │   ├── di/                   # Application dependency composition
 │   │   ├── error/                # Failure types
@@ -831,7 +826,7 @@ flutter test test/core/responsive test/widget_test.dart
 flutter pub get
 flutter gen-l10n
 dart run build_runner build
-flutter run --dart-define-from-file=config/dev.json
+flutter run
 ```
 
 Generated localization, `.g.dart`, and `.freezed.dart` files are part of the
@@ -1054,54 +1049,30 @@ navigation:
 flutter test test/features/products test/core/responsive test/widget_test.dart
 ```
 
-## Environment configuration
+## App configuration
 
-The application reads compile-time values through `AppConfig`.
+The application reads shared constants, including the DummyJSON API base URL
+used by the Products example, from `AppConfig`. Update
+[app_config.dart](lib/core/config/app_config.dart) directly when integrating
+the real backend.
 
-`config/dev.json`:
-
-```json
-{
-  "APP_ENV": "development",
-  "API_BASE_URL": "https://dummyjson.com"
-}
-```
-
-`config/prod.json`:
-
-```json
-{
-  "APP_ENV": "production",
-  "API_BASE_URL": "https://dummyjson.com"
-}
-```
-
-Both template configurations use DummyJSON so the Products example works
-immediately. Replace these URLs with the appropriate development and production
-API hosts when integrating the real backend.
-
-Run development:
+Run:
 
 ```sh
-flutter run --dart-define-from-file=config/dev.json
+flutter run
 ```
 
 Build a production App Bundle:
 
 ```sh
-flutter build appbundle --release \
-  --dart-define-from-file=config/prod.json
+flutter build appbundle --release
 ```
 
 Build a production APK:
 
 ```sh
-flutter build apk --release \
-  --dart-define-from-file=config/prod.json
+flutter build apk --release
 ```
-
-These files must contain public build-time configuration only. Values compiled
-into a client application can be extracted, so never place secrets in them.
 
 ## Networking
 
@@ -1415,8 +1386,7 @@ flutter test
 Build verification:
 
 ```sh
-flutter build apk --release \
-  --dart-define-from-file=config/prod.json
+flutter build apk --release
 ```
 
 ## Release signing
